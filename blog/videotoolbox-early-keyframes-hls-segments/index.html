@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VideoToolbox emits keyframes early, and my HLS segments came out twice as long — McMizzle</title>
+<meta name="description" content="MaxKeyFrameIntervalDuration is a ceiling, not a schedule, and it counts the timestamps you supply rather than wall clock. One HLS segment a minute came out 2x.">
+<link rel="canonical" href="https://mcmizzle.com/blog/videotoolbox-early-keyframes-hls-segments/">
+<link rel="alternate" type="application/rss+xml" title="McMizzle Blog" href="https://mcmizzle.com/blog/feed.xml">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf6ec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201a13">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://mcmizzle.com/blog/videotoolbox-early-keyframes-hls-segments/">
+<meta property="og:title" content="VideoToolbox emits keyframes early, and my HLS segments came out twice as long — McMizzle">
+<meta property="og:description" content="MaxKeyFrameIntervalDuration is a ceiling, not a schedule, and it counts the timestamps you supply rather than wall clock. One HLS segment a minute came out 2x.">
+<meta property="og:image" content="https://mcmizzle.com/assets/og-videotoolbox-early-keyframes-hls-segments.png">
+<meta property="article:published_time" content="2026-08-25">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
+<main>
+<article class="post">
+  <h1>VideoToolbox emits keyframes early, and my HLS segments came out twice as long</h1>
+  <p class="post-meta">Kevin McMahon · August 25, 2026</p>
+
+  <p>
+    I have a tvOS app, <a href="/ambientcast/">AmbientCast</a>, that takes a 3D
+    printer's camera feed, composites a status overlay onto it, re-encodes it
+    with VideoToolbox and serves it as HLS to a local player. Segments are cut
+    on keyframes, and the encoder is configured for a keyframe every second, so
+    segments should be a second long.
+  </p>
+
+  <p>
+    On a real camera, one segment a minute came out at about 1.97 seconds.
+    Fourteen consecutive minutes, fourteen double-length segments. On the app's
+    synthetic demo feed — same build, same encoder settings, same minute — the
+    longest segment was 1.01 seconds and it never happened once.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what's a keyframe?</summary>
+    <p>
+      Most frames in a compressed video only describe what changed since the
+      frame before, so they're useless on their own. A keyframe is a complete
+      picture that needs nothing before it. A player can start there, which is
+      why anywhere you want playback to be able to begin has to be a keyframe.
+    </p>
+  </details>
+
+  <details class="eli5">
+    <summary>ELI5: what's an HLS segment?</summary>
+    <p>
+      HTTP Live Streaming chops a stream into a series of small files, each a
+      second or two long, and publishes a playlist listing them. The player
+      fetches the playlist, then the files. Because a player has to be able to
+      start playing at the front of any file, every segment has to begin on a
+      keyframe.
+    </p>
+  </details>
+
+  <h2>The measurement</h2>
+
+  <p>
+    A minute-by-minute probe on a physical Apple TV 4K (3rd generation) running
+    tvOS 27, against a Bambu Lab P2S camera at 1920×1080 delivering around
+    28 fps. Segment count, mean length, and the longest segment in each window:
+  </p>
+
+  <pre><code>54 segments in 60.8s   mean 1.13s   longest 1.96s
+56 segments in 60.1s   mean 1.07s   longest 1.98s
+56 segments in 60.7s   mean 1.08s   longest 1.96s
+56 segments in 60.9s   mean 1.09s   longest 1.97s
+53 segments in 60.3s   mean 1.14s   longest 1.97s
+57 segments in 61.3s   mean 1.07s   longest 1.98s
+53 segments in 60.1s   mean 1.13s   longest 1.96s
+52 segments in 61.2s   mean 1.18s   longest 1.99s
+57 segments in 61.0s   mean 1.07s   longest 1.98s
+60 segments in 62.0s   mean 1.03s   longest 2.00s
+52 segments in 60.1s   mean 1.16s   longest 2.03s
+57 segments in 60.3s   mean 1.06s   longest 1.97s
+54 segments in 60.1s   mean 1.11s   longest 1.98s
+55 segments in 60.2s   mean 1.09s   longest 1.96s
+</code></pre>
+
+  <p>
+    The ~2× outlier is what I noticed, but the mean is the more honest number:
+    it ran 3 to 18 percent long the whole time. Whatever was happening was
+    happening constantly, and one segment a minute was just the worst case of
+    it.
+  </p>
+
+  <h2>The fix that only fixed one side</h2>
+
+  <p>
+    There was already a tolerance in the segment-cut test, and I had put it
+    there. Segments used to come out in a coin-flip mixture of 1.00 and 2.00
+    seconds, decided by sub-millisecond timing, because the test was a bare
+    <code>elapsed &gt;= 1.0</code> against keyframes arriving a hair under a
+    second. So I widened it by one frame:
+  </p>
+
+  <pre><code>// keyframeArrivalTolerance = 1.0 / 30.0
+if isKeyframe &amp;&amp; elapsed &gt;= targetDuration - keyframeArrivalTolerance {
+    closeSegment()
+}
+</code></pre>
+
+  <p>
+    That worked, and the name I gave the constant is what cost me the second
+    bug. <em>Tolerance</em> and <em>arrival</em> describe absorbing jitter — a
+    keyframe turning up slightly late. I had reasoned that the encoder property
+    is an upper bound, so keyframes arrive at one second or a hair under, and a
+    hair under is exactly what the tolerance absorbed. Having named the
+    constant after one side of the distribution, I stopped thinking about the
+    other one.
+  </p>
+
+  <p>
+    A keyframe arriving at 0.95 seconds misses that test by 17 milliseconds. No
+    cut happens, and the segment stays open until the next keyframe — which,
+    because the encoder's own interval restarted from the early keyframe, is
+    about 1.95 seconds in.
+  </p>
+
+  <h2>What the documentation says, and where</h2>
+
+  <p>
+    Apple's page for
+    <a href="https://developer.apple.com/documentation/videotoolbox/kvtcompressionpropertykey_maxkeyframeintervalduration"><code>kVTCompressionPropertyKey_MaxKeyFrameIntervalDuration</code></a>,
+    which is the property I was setting, says this in full:
+  </p>
+
+  <blockquote>
+    <p>The maximum duration from one key frame to the next in seconds.</p>
+  </blockquote>
+
+  <p>
+    Its discussion adds that the default is 0, meaning no limit, that it is
+    useful when the frame rate is variable, that it can be combined with the
+    frame-count version — and then, in a single cross-reference,
+    <em>"See <code>kVTCompressionPropertyKey_MaxKeyFrameInterval</code> for
+    more discussion of key frames."</em>
+  </p>
+
+  <p>
+    That link is where the answer was. The
+    <a href="https://developer.apple.com/documentation/videotoolbox/kvtcompressionpropertykey_maxkeyframeinterval">frame-count property's page</a>
+    says:
+  </p>
+
+  <blockquote>
+    <p>
+      Video encoders are allowed to generate key frames more frequently if
+      doing so results in more efficient compression.
+    </p>
+  </blockquote>
+
+  <p>
+    So the behavior is documented — on a page about a different property, in a
+    paragraph you reach by following a one-line "for more discussion" pointer
+    from the page you were actually reading. I had read the page for the
+    property I was setting, decided it told me what I needed, and not followed
+    the link.
+  </p>
+
+  <p>
+    Efficient compression is exactly what a camera pointed at a moving toolhead
+    under changing light provokes. Scene changes are constant, and the encoder
+    obligingly spends a keyframe on each one. It is a ceiling, not a schedule.
+  </p>
+
+  <h2>Which clock? That part really isn't documented</h2>
+
+  <p>
+    There is a second question the documentation does not answer anywhere:
+    <em>duration</em> in seconds of what. Wall-clock seconds, or seconds of the
+    presentation timestamps you hand the encoder? Those diverge the moment your
+    input frame rate isn't what you assumed, or a backpressure guard drops
+    frames.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what's a presentation timestamp?</summary>
+    <p>
+      Every frame you hand an encoder carries a timestamp saying when it should
+      be shown, and you supply it yourself. It usually tracks real time, but
+      nothing enforces that — you can feed a whole hour's worth of timestamped
+      frames through in a few seconds, and the encoder will happily believe
+      them.
+    </p>
+  </details>
+
+  <p>
+    This is answerable in about forty lines and does not need the app, a
+    device, or a simulator. Push frames through a real
+    <code>VTCompressionSession</code> on a Mac as fast as the CPU allows, with
+    the timestamps advancing at 1/30 of a second per frame, and see where the
+    keyframes land:
+  </p>
+
+  <pre><code>fed 150 frames (5.00s of PTS at 30fps) in 0.130s of wall clock -&gt; 38x real time
+keyframes at input frame indices: [0, 30, 60, 90, 120]
+keyframe gaps, in frames: [30, 30, 30, 30]
+=&gt; PTS-BASED
+</code></pre>
+
+  <p>
+    At 38 times real time the cadence did not move. The property counts the
+    timestamps you supply and knows nothing about wall clock. That matters if,
+    like me, you derived those timestamps from a frame counter and a nominal
+    frame rate while the segmenter measured elapsed time some other way: the
+    producer of keyframes was counting frames and the consumer of keyframes was
+    counting seconds, and they agreed only while the camera delivered exactly
+    the rate I had assumed.
+  </p>
+
+  <p>
+    Reach for a harness like that whenever the question is "what does this
+    Apple API actually do" rather than "what does my app do with it." Minutes,
+    against a build-install-observe cycle for the same answer.
+  </p>
+
+  <h2>Why the test rig couldn't see any of this</h2>
+
+  <p>
+    Every automated check I have kept passing the whole time. The app's demo
+    mode is immune twice over, and both reasons are properties of synthetic
+    video rather than of my code: a smooth generated animation has no scene
+    changes to provoke an early keyframe, and its timestamps sit on an exact
+    frame grid, so keyframes land at exactly 1.000 seconds and satisfy any test
+    you write. The same is true of an <code>ffmpeg</code> test pattern, which
+    is what my other rig used.
+  </p>
+
+  <p>
+    Smooth, synthetic, exactly-timed sources hide a whole class of encoder
+    behavior. If the encoder's decisions are load-bearing for you, at some
+    point you have to point it at real content.
+  </p>
+
+  <h2>The fix</h2>
+
+  <p>
+    State the rule as a floor rather than as a target minus an allowance. Cut
+    on the first keyframe at or after a minimum segment duration:
+  </p>
+
+  <pre><code>// minimumSegmentDuration = 0.75
+if isKeyframe &amp;&amp; elapsed &gt;= minimumSegmentDuration {
+    closeSegment()
+}
+</code></pre>
+
+  <p>
+    An early keyframe now closes a slightly short segment instead of leaving a
+    double-length one. Short costs nothing here — the playlist's
+    <code>EXT-X-TARGETDURATION</code> is 3 and the served window is measured in
+    seconds — where a double-length segment eats into the window's depth.
+  </p>
+
+  <p>
+    Measured on the same camera during the same print, ten minutes apart, one
+    variable changed. Before: 52–60 segments a minute, mean 1.03–1.18s, longest
+    1.96–2.03s. After:
+  </p>
+
+  <pre><code>62 segments in 60.4s   mean 0.97s   longest 1.02s
+62 segments in 60.9s   mean 0.98s   longest 1.01s
+61 segments in 60.2s   mean 0.99s   longest 1.06s
+61 segments in 60.1s   mean 0.99s   longest 1.02s
+61 segments in 60.1s   mean 0.99s   longest 1.02s
+</code></pre>
+
+  <p>
+    It also moved something I wasn't aiming at. The player's seekable margin —
+    how much buffered video sits ahead of it — had been oscillating around zero
+    on this camera, reading <code>+1.1, -0.2, +0.4, -0.5, -0.8, -3.1</code> and
+    so on. Afterwards it sat at a steady +2.1 to +2.7 seconds, with the playhead
+    holding the same distance behind live. A window measured in seconds only
+    holds the depth it intends if the segments are the length it assumes, and
+    one double-length segment a minute had been quietly eating it. I am
+    attributing that to this change rather than to conditions on the usual
+    terms — same camera, same print, ten minutes apart, one variable moved —
+    which is as clean as an A/B gets on live hardware and is still not a
+    controlled experiment.
+  </p>
+
+  <h2>What I'd tell you to check first</h2>
+
+  <p>
+    If your keyframe-aligned segments are the wrong length and you're setting a
+    max keyframe interval:
+  </p>
+
+  <ul>
+    <li>
+      <strong>Assume the encoder will beat your deadline.</strong> The interval
+      is a ceiling. Scene changes and rate-control decisions both spend
+      keyframes early, and real camera content supplies plenty of both.
+    </li>
+    <li>
+      <strong>Check which clock your timestamps are on</strong> against which
+      clock your segmenter is on. The encoder is on presentation timestamps.
+      If your segmenter is on wall clock and your timestamps came from a frame
+      counter, those agree only while the input rate is what you assumed.
+    </li>
+    <li>
+      <strong>Stop asking and start telling.</strong> The version that ends
+      this class of bug is
+      <a href="https://developer.apple.com/documentation/videotoolbox/kvtencodeframeoptionkey_forcekeyframe"><code>kVTEncodeFrameOptionKey_ForceKeyFrame</code></a>,
+      driven from the segmenter's own clock, so the two cannot disagree at all.
+      I widened a tolerance twice before writing that sentence down.
+    </li>
+    <li>
+      <strong>Read the neighbouring documentation page.</strong> Half of this
+      was published the whole time, one cross-reference away from the page I
+      was on.
+    </li>
+  </ul>
+
+  <p>
+    And the one I'd keep even if you never touch VideoToolbox: name a constant
+    after the property it enforces, not after the failure it absorbs.
+    <code>keyframeArrivalTolerance</code> described one tail of a two-sided
+    distribution, and for as long as it was called that, the other tail was not
+    something I thought to look for.
+  </p>
+</article>
+<nav class="post-nav"><a href="/blog/">← All posts</a></nav>
+</main>
+<footer>
+  <nav class="footer-links">
+    <a href="/about/">About</a> &middot;
+    <a href="/blog/">Blog</a> &middot;
+    <a href="/printing/">3D printing</a> &middot;
+    <a href="/support/">Support</a> &middot;
+    <a href="/privacy/">Privacy</a> &middot;
+    <a href="/blog/feed.xml">RSS</a> &middot;
+    <a href="https://www.linkedin.com/in/mcmizzle">LinkedIn</a>
+  </nav>
+  <p class="footer-legal">&copy; 2026 Kevin McMahon (McMizzle)</p>
+</footer>
+</body>
+</html>

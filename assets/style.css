@@ -1,0 +1,357 @@
+:root {
+  color-scheme: light dark;
+  --bg: #fdf6ec;
+  --fg: #2e2418;
+  --muted: #7e6f5a;
+  --border: #ecdfc9;
+  --card: #fffdf8;
+  --accent: #b95238;
+  --accent-soft: #f3ded2;
+  --max-width: 680px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #201a13;
+    --fg: #f5ead9;
+    --muted: #b7a58a;
+    --border: #3a3022;
+    --card: #2a2318;
+    --accent: #e8926f;
+    --accent-soft: #3a2a20;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 3.5rem 1.5rem 5rem;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.65;
+}
+
+main {
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+header.site-header {
+  max-width: var(--max-width);
+  margin: 0 auto 2.5rem;
+}
+
+header.site-header a.home-link {
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--fg);
+  font-size: 1.15rem;
+}
+
+h1 {
+  font-size: 2.1rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-top: 2.5rem;
+  color: var(--fg);
+}
+
+p, li {
+  color: var(--fg);
+}
+
+.tagline {
+  color: var(--muted);
+  margin-top: 0;
+  font-size: 1.1rem;
+  font-style: italic;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-soft);
+  text-underline-offset: 2px;
+}
+
+.app-list {
+  list-style: none;
+  padding: 0;
+  margin: 1.75rem 0;
+}
+
+.app-list li {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1.15rem 1.35rem;
+  margin-bottom: 0.9rem;
+  box-shadow: 0 2px 10px rgba(60, 40, 20, 0.06);
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.app-list li .icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.app-icon {
+  width: 96px;
+  height: 96px;
+  border-radius: 22px;
+  box-shadow: 0 4px 16px rgba(60, 40, 20, 0.15);
+  margin-bottom: 1rem;
+}
+
+.app-list .app-name {
+  font-weight: 700;
+  display: block;
+}
+
+.app-list .app-desc {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* Pre-launch badge. Was removed once as dead CSS when the last app was
+   submitted; it is back because every app is pre-launch again. Not nested
+   under .app-list this time — the app pages carry it too, since a visitor
+   landing on one directly from a search would otherwise have no idea the
+   thing isn't downloadable yet. */
+.coming-soon {
+  display: inline-block;
+  margin-top: 0.3rem;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--accent-soft);
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+}
+
+/* Its opposite number, for an app that has actually shipped. Same pill shape
+   and metrics as .coming-soon so a mixed list keeps one rhythm, filled rather
+   than tinted so the app you can download reads as the stronger of the two.
+   Deliberately text and not Apple's "Download on the App Store" badge image:
+   that badge is served from Apple's CDN, and the privacy page promises this
+   site makes no third-party loads. */
+.app-store {
+  display: inline-block;
+  margin-top: 0.3rem;
+  color: var(--bg);
+  background: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  text-decoration: none;
+}
+
+footer {
+  max-width: var(--max-width);
+  margin: 3rem auto 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* The same links on every page, so Support and Privacy are reachable from a
+   blog post — the likeliest landing page for anyone arriving from a forum
+   reply — without each page hand-listing them in its own body. Wraps to as
+   many lines as it needs on a phone. */
+footer .footer-links {
+  margin-bottom: 0.6rem;
+  line-height: 2;
+}
+
+footer .footer-legal {
+  margin: 0;
+  color: var(--muted);
+}
+
+code {
+  background: var(--accent-soft);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+/* ---- Blog ---- */
+
+/* Post index: one entry per post, newest first. */
+.post-list {
+  list-style: none;
+  padding: 0;
+  margin: 1.75rem 0;
+}
+
+.post-list li {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.post-list li:last-child {
+  border-bottom: none;
+}
+
+.post-list .post-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  display: block;
+}
+
+.post-list .post-summary {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin: 0.35rem 0 0;
+}
+
+/* Byline under a post's h1, and the date on each index entry. */
+.post-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 0;
+  letter-spacing: 0.02em;
+}
+
+article.post h2 {
+  margin-top: 2.75rem;
+}
+
+article.post h3 {
+  font-size: 1.02rem;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 0.4rem;
+}
+
+article.post blockquote {
+  margin: 1.5rem 0;
+  padding: 0.15rem 0 0.15rem 1.15rem;
+  border-left: 3px solid var(--accent-soft);
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Code blocks scroll horizontally rather than wrapping — wrapped code
+   is harder to read than code you have to scroll. */
+article.post pre {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+/* Inside a block, code is already set off by the block itself, so drop
+   the inline badge treatment. */
+article.post pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+}
+
+/* For a post with a screenshot. No post has one yet, but an unstyled
+   oversized image would break the layout the day one does. */
+article.post figcaption {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 0.4rem;
+}
+
+article.post img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+}
+
+/* Footer nav at the end of a post. */
+.post-nav {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+/* ---- ELI5 asides ----
+   Plain <details>/<summary>. No JavaScript: collapsing is the element's own
+   behavior, so these work with JS off, are keyboard operable and announced
+   correctly by screen readers for free, and degrade to an open block on
+   anything too old to know <details> at all. */
+
+details.eli5 {
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.5rem 0.9rem;
+  margin: 1.5rem 0;
+  font-size: 0.93rem;
+}
+
+details.eli5 > summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--accent);
+  /* Drop the native triangle in favor of the +/- drawn below. */
+  list-style: none;
+  padding-right: 1.5rem;
+  position: relative;
+}
+
+details.eli5 > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.eli5 > summary::after {
+  content: "+";
+  position: absolute;
+  right: 0;
+  font-weight: 400;
+  font-size: 1.15rem;
+  line-height: 1.35;
+  opacity: 0.65;
+}
+
+details.eli5[open] > summary::after {
+  content: "\2212";  /* proper minus, not a hyphen */
+}
+
+details.eli5[open] > summary {
+  margin-bottom: 0.4rem;
+}
+
+/* Keyboard focus has to stay visible once the native marker is gone. */
+details.eli5 > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+details.eli5 > p:last-child {
+  margin-bottom: 0.5rem;
+}
+
+details.eli5 code {
+  /* The aside is already accent-tinted; the inline badge would vanish into it. */
+  background: var(--card);
+}

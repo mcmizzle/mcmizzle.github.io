@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — McMizzle</title>
+<meta name="description" content="Privacy policy for all McMizzle apps, including AmbientCast and Calorie Burndown.">
+<link rel="canonical" href="https://mcmizzle.com/privacy/">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf6ec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201a13">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mcmizzle.com/privacy/">
+<meta property="og:title" content="Privacy Policy — McMizzle">
+<meta property="og:description" content="Privacy policy for all McMizzle apps, including AmbientCast and Calorie Burndown.">
+<meta property="og:image" content="https://mcmizzle.com/assets/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
+<main>
+  <h1>Privacy Policy</h1>
+  <p class="tagline">Last updated: August 7, 2026. Applies to every McMizzle app, including AmbientCast and Calorie Burndown.</p>
+
+  <p>
+    The short version: your data stays on your own devices. None of it passes
+    through any server McMizzle operates, because there isn't one — every
+    McMizzle app talks directly to the services you've chosen to connect it
+    to (like Bambu Lab or YouTube), or to Apple's own on-device frameworks
+    (like HealthKit), and nowhere else.
+  </p>
+
+  <h2>What McMizzle apps store, and where</h2>
+  <p>Specifics vary by app, but the pattern is the same everywhere:</p>
+  <ul>
+    <li>
+      <strong>Account credentials and access tokens</strong> (e.g. AmbientCast's
+      Bambu Lab sign-in) are stored in your device's Keychain, on-device only.
+      Passwords are sent directly to the relevant third-party service to
+      authenticate — never stored by the app itself.
+    </li>
+    <li>
+      <strong>Health &amp; fitness data</strong> (e.g. Calorie Burndown's use of
+      HealthKit) is read directly from Apple's HealthKit on your device and
+      never leaves it, governed by Apple's own HealthKit privacy rules.
+    </li>
+    <li>
+      <strong>App settings and cached status</strong> (e.g. printer connection
+      details, daily calorie goals) are stored locally, and where an app has
+      a companion widget or watch app, shared only via an on-device App Group
+      container — never sent anywhere off-device.
+    </li>
+  </ul>
+
+  <h2>What McMizzle apps don't do</h2>
+  <ul>
+    <li>No analytics, crash reporting, advertising, or tracking SDKs of any
+      kind are included in any McMizzle app.</li>
+    <li>No account credentials, health data, or usage data are ever sent to
+      any server McMizzle operates.</li>
+    <li>Nothing is sold or shared with third parties beyond the services
+      you've directly chosen to connect to.</li>
+  </ul>
+
+  <h2>Third-party services</h2>
+  <p>
+    Where a McMizzle app connects to a service on your behalf (e.g.
+    AmbientCast to Bambu Lab's cloud or YouTube for optional live
+    streaming), what that service then does with your data on its own side
+    is governed by that service's own privacy policy, not this one. How the
+    McMizzle app itself requests, uses, stores, and deletes that data is
+    covered here — see
+    <a href="#ambientcast-google">Google user data</a> below for the full
+    account of AmbientCast's YouTube Live feature.
+  </p>
+  <p>
+    No McMizzle app shares your data with any third party for McMizzle's own
+    purposes. There are no analytics providers, advertising networks,
+    tracking SDKs, or parent, subsidiary, or related entities with access to
+    your data — the only services your data ever reaches are the ones you
+    personally chose to connect the app to, and it goes there directly from
+    your device.
+  </p>
+
+  <h2>Retention, deletion, and revoking access</h2>
+  <p>
+    Because everything lives on your own device rather than on a McMizzle
+    server, you control all of it directly and nothing has to be requested
+    from McMizzle:
+  </p>
+  <ul>
+    <li><strong>Account credentials and access tokens</strong> (AmbientCast's
+      Bambu Lab sign-in, YouTube OAuth tokens) are kept in your device's
+      Keychain until you sign out of that service from the app's Settings,
+      which deletes them immediately and on-device. For YouTube you can also
+      revoke AmbientCast's access at
+      <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</li>
+    <li><strong>Health &amp; fitness data</strong> is never copied or stored
+      by the app — it's read from Apple's HealthKit on demand. Revoke that
+      access any time in the iOS Settings app under Privacy &amp; Security →
+      Health, or in the Health app itself.</li>
+    <li><strong>App settings and cached status</strong> are stored locally
+      and are removed along with the app when you delete it.</li>
+  </ul>
+  <p>
+    Deleting a McMizzle app removes everything above from your device. Since
+    no copy is ever sent to a McMizzle server, there is nothing left behind
+    for you to request the deletion of, and no deletion request to make.
+  </p>
+
+  <h2 id="ambientcast-google">Google user data (AmbientCast's optional YouTube Live feature)</h2>
+  <p>
+    This section exists specifically to satisfy Google API Services User
+    Data Policy disclosure requirements for AmbientCast's optional YouTube
+    Live broadcasting feature.
+  </p>
+  <p>
+    <strong>What's requested and why.</strong> When you turn on YouTube Live
+    in AmbientCast's Settings and sign in, it requests the single OAuth
+    scope <code>https://www.googleapis.com/auth/youtube</code> — the
+    narrowest scope Google's device-flow sign-in (used because tvOS has no
+    in-app browser for a standard OAuth redirect) permits for YouTube at
+    all; the read-only <code>youtube.readonly</code> scope isn't sufficient
+    because the app needs to create and manage a broadcast, not just read
+    your channel. With that scope, AmbientCast only ever calls:
+  </p>
+  <ul>
+    <li><code>liveBroadcasts.insert</code> / <code>.bind</code> /
+      <code>.transition</code> — to create a live broadcast on your own
+      channel and start/stop it, only when you tap the record button (or
+      the optional auto-start-with-print-jobs setting fires).</li>
+    <li><code>liveStreams.insert</code> — to create the ingest endpoint
+      AmbientCast's own RTMP relay pushes your printer's camera feed to.</li>
+    <li><code>thumbnails.set</code> — to set the finished broadcast's
+      thumbnail to a still frame of your own completed print, once, when a
+      broadcast you started ends.</li>
+    <li><code>videos.insert</code> — to upload a short timelapse of your own
+      completed print to your own channel, if you've turned that on. The
+      timelapse is assembled on your device from your own printer's camera
+      feed, and is uploaded once, when the print finishes. It has its own
+      visibility setting, separate from the broadcast's, so you can keep the
+      full-length stream private while the timelapse is public (or the other
+      way round, or neither).</li>
+  </ul>
+  <p>
+    Nothing else on your YouTube account is ever read, listed, or modified —
+    no other videos, playlists, subscriptions, comments, or channel
+    settings. Every one of these calls is a direct consequence of something
+    you started: a broadcast you began yourself, or a print you chose to have
+    a timelapse made of. AmbientCast never creates, modifies, or ends a
+    broadcast, and never uploads anything, on its own.
+  </p>
+  <p>
+    <strong>Data protection.</strong> Your OAuth access and refresh tokens
+    are stored in your device's Keychain, on-device only, encrypted at rest
+    by iOS/tvOS's standard Keychain protection. In transit they are sent
+    only over encrypted HTTPS/TLS connections, and only ever directly to
+    Google's own token and YouTube Data API endpoints — never to any server
+    McMizzle operates, because there isn't one. No McMizzle employee or
+    system can read them, since they exist nowhere McMizzle can reach.
+  </p>
+  <p>
+    <strong>Retention and deletion.</strong> Your OAuth tokens stay in your
+    device's Keychain only until you either sign out of YouTube from
+    AmbientCast's Settings (which deletes them immediately, on-device) or
+    revoke AmbientCast's access directly from Google at
+    <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>
+    (which invalidates them on Google's side even if the local copy hasn't
+    been cleared yet). No copy of these tokens, or of anything read/written
+    using them, is ever retained anywhere off your device — there is no
+    McMizzle-operated server for any of it to be retained on.
+  </p>
+  <p>
+    <strong>Limited Use.</strong> AmbientCast's use of information received
+    from Google APIs adheres to the
+    <a href="https://developers.google.com/terms/api-services-user-data-policy">Google
+    API Services User Data Policy</a>, including its
+    <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes">Limited
+    Use</a> requirements. Specifically, Google user data is used only to
+    provide the YouTube Live broadcasting feature described above; it is
+    never transferred to others except as necessary to provide that feature
+    (which, since there is no McMizzle server, means it is never transferred
+    at all), never used for advertising, never used to build profiles or for
+    any purpose other than the one you invoked it for, and never read by
+    humans.
+  </p>
+
+  <h2>This website</h2>
+  <p>
+    Everything above is about the apps. This site is worth a short note of its
+    own, because until now this policy didn't mention it at all.
+  </p>
+  <ul>
+    <li>
+      <strong>No cookies, and no JavaScript.</strong> Every page here is plain
+      static HTML and CSS. There is no analytics script, no tag manager, no
+      embedded widget, and nothing loaded from a third-party domain — so there
+      is nothing here that could follow you to another site.
+    </li>
+    <li>
+      <strong>McMizzle never sees who visits.</strong> There is no server to
+      log anything: the site is hosted on GitHub Pages, which necessarily
+      handles the request in order to send you the page, under
+      <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub's own privacy statement</a>.
+      That data goes to GitHub as the host, not to McMizzle.
+    </li>
+    <li>
+      <strong>Google Search Console.</strong> This site is registered with it,
+      which reports how the site appears in Google's search results — which
+      pages are indexed, and roughly which searches showed them. It is
+      aggregate information about Google's index, not about you: it places
+      nothing on this site, sets nothing on your device, and cannot identify
+      an individual visitor.
+    </li>
+  </ul>
+
+  <h2>Contact</h2>
+  <p>
+    Questions about this policy: see the <a href="/support/">support page</a>
+    for the right place to ask, per app.
+  </p>
+</main>
+<footer>
+  <nav class="footer-links">
+    <a href="/about/">About</a> &middot;
+    <a href="/blog/">Blog</a> &middot;
+    <a href="/printing/">3D printing</a> &middot;
+    <a href="/support/">Support</a> &middot;
+    <a href="/privacy/">Privacy</a> &middot;
+    <a href="/blog/feed.xml">RSS</a> &middot;
+    <a href="https://www.linkedin.com/in/mcmizzle">LinkedIn</a>
+  </nav>
+  <p class="footer-legal">&copy; 2026 Kevin McMahon (McMizzle)</p>
+</footer>
+</body>
+</html>

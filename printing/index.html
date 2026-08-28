@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3D printing — McMizzle</title>
+<meta name="description" content="Printable geometry authored directly in Python with no CAD, and the printability checks that catch what a watertight test misses.">
+<link rel="canonical" href="https://mcmizzle.com/printing/">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf6ec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201a13">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mcmizzle.com/printing/">
+<meta property="og:title" content="3D printing — McMizzle">
+<meta property="og:description" content="Printable geometry authored directly in Python with no CAD, and the printability checks that catch what a watertight test misses.">
+<meta property="og:image" content="https://mcmizzle.com/assets/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
+<main>
+  <h1>3D printing</h1>
+  <p class="tagline">Geometry written as code, and the checks that catch what looks fine.</p>
+
+  <p>
+    The models here are authored directly in Python and written straight out
+    as STLs. There is no CAD program anywhere in the loop — no sketch, no
+    constraint solver, no mouse. A part is a function, and the parameters
+    that shape it are arguments.
+  </p>
+
+  <p>
+    The trade is obvious enough. Anything you could draw in thirty seconds
+    takes longer this way. What you get back is that every dimension has a
+    name, a part regenerates from its parameters instead of being nudged into
+    shape, and a fit that was wrong by 0.2&nbsp;mm is a one-line change rather
+    than an afternoon of re-drawing.
+  </p>
+
+  <h2>printing-toolkit</h2>
+  <p>
+    The library underneath all of it is
+    <a href="https://github.com/mcmizzle-printing/printing-toolkit">printing-toolkit</a>,
+    and it's open source. Solids, boolean operations, and the joint
+    primitives that keep coming up — tabs, rails, channels, snap fits — plus
+    the part that turned out to matter more than the geometry: the checks.
+  </p>
+
+  <h2>Watertight is not the same as printable</h2>
+  <p>
+    A mesh can pass every integrity check a modeller offers and still fail on
+    the bed, because those checks ask whether the surface is closed, not
+    whether the shape can be built one layer at a time. So the toolkit runs
+    its own, and they're the checks that actually catch things:
+  </p>
+  <ul>
+    <li><strong>Watertight</strong> — closed surface, consistent winding. The
+      necessary condition, and the one everyone stops at.</li>
+    <li><strong>On the bed</strong> — the part is where you think it is, in a
+      volume the printer actually has.</li>
+    <li><strong>Islands and cantilevers</strong> — material that begins in
+      mid-air with nothing under it. Perfectly watertight, and it will print
+      as a small pile of string.</li>
+    <li><strong>A headless slice</strong> — the last word on all of the
+      above, because the slicer is the only thing whose opinion the printer
+      shares.</li>
+  </ul>
+  <p>
+    The one that catches people, including me: touching another wall
+    sideways is not support. A feature can be firmly attached to the model on
+    two faces and still have nothing beneath its first layer, which is the
+    only direction that counts.
+  </p>
+
+  <h2>What comes out</h2>
+  <p>
+    Finished prints end up as
+    <a href="https://www.youtube.com/@KevinMcMizzle">timelapses on YouTube</a>,
+    recorded and uploaded by <a href="/ambientcast/">AmbientCast</a> — the
+    tvOS app that was watching the printer anyway. The write-ups that come
+    out of this work land on the <a href="/blog/">blog</a>, alongside the
+    app ones.
+  </p>
+</main>
+<footer>
+  <nav class="footer-links">
+    <a href="/about/">About</a> &middot;
+    <a href="/blog/">Blog</a> &middot;
+    <a href="/printing/">3D printing</a> &middot;
+    <a href="/support/">Support</a> &middot;
+    <a href="/privacy/">Privacy</a> &middot;
+    <a href="/blog/feed.xml">RSS</a> &middot;
+    <a href="https://www.linkedin.com/in/mcmizzle">LinkedIn</a>
+  </nav>
+  <p class="footer-legal">&copy; 2026 Kevin McMahon (McMizzle)</p>
+</footer>
+</body>
+</html>

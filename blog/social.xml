@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>McMizzle — social copy</title>
+    <link>https://mcmizzle.com/blog/</link>
+    <description>Hand-written LinkedIn copy for each post, for a scheduler to queue. Generated from blog/SOCIAL.md; not intended for human readers.</description>
+    <language>en-us</language>
+    <atom:link href="https://mcmizzle.com/blog/social.xml" rel="self" type="application/rss+xml"/>
+    <item>
+      <title><![CDATA[VideoToolbox emits keyframes early, and my HLS segments came out twice as long]]></title>
+      <link>https://mcmizzle.com/blog/videotoolbox-early-keyframes-hls-segments/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/videotoolbox-early-keyframes-hls-segments/</guid>
+      <pubDate>Tue, 25 Aug 2026 12:00:00 +0000</pubDate>
+      <description><![CDATA[My video pipeline produced one segment a minute at double the length it should have been. Only on a real camera. On synthetic test video — same build, same settings, same minute — it never happened once.
+
+The encoder was told: a keyframe at least every second. It obliged, and then it also did something I hadn't asked about. Encoders are allowed to spend keyframes early when a scene changes, and a camera pointed at a moving machine under changing light gives them scene changes constantly. A keyframe arriving 17 milliseconds too early missed my "is it time to cut?" test, so the segment stayed open until the next one — a full second later.
+
+Two things I'd pass on.
+
+The first is that the behaviour was documented the whole time, on the page for a *different* property, reached by a one-line "see also" from the page I was reading. I'd decided the page I was on told me what I needed. Fifteen minutes of reading both would have saved the evening.
+
+The second is about a name. The constant I'd written for this was called "keyframe arrival tolerance" — it existed to absorb keyframes arriving slightly late. Late is one tail of a two-sided distribution, and for as long as the constant was named after that tail, the other tail wasn't something I thought to look for. Renaming it to what it actually enforces — a minimum segment length — made the bug obvious.
+
+Name a constant after the property it enforces, not after the failure it absorbs.
+
+Full write-up, with the before-and-after measurements and a forty-line harness that answers "which clock does this API actually use" without a device: https://mcmizzle.com/blog/videotoolbox-early-keyframes-hls-segments/]]></description>
+      <content:encoded><![CDATA[My video pipeline produced one segment a minute at double the length it should have been. Only on a real camera. On synthetic test video — same build, same settings, same minute — it never happened once.
+
+The encoder was told: a keyframe at least every second. It obliged, and then it also did something I hadn't asked about. Encoders are allowed to spend keyframes early when a scene changes, and a camera pointed at a moving machine under changing light gives them scene changes constantly. A keyframe arriving 17 milliseconds too early missed my "is it time to cut?" test, so the segment stayed open until the next one — a full second later.
+
+Two things I'd pass on.
+
+The first is that the behaviour was documented the whole time, on the page for a *different* property, reached by a one-line "see also" from the page I was reading. I'd decided the page I was on told me what I needed. Fifteen minutes of reading both would have saved the evening.
+
+The second is about a name. The constant I'd written for this was called "keyframe arrival tolerance" — it existed to absorb keyframes arriving slightly late. Late is one tail of a two-sided distribution, and for as long as the constant was named after that tail, the other tail wasn't something I thought to look for. Renaming it to what it actually enforces — a minimum segment length — made the bug obvious.
+
+Name a constant after the property it enforces, not after the failure it absorbs.
+
+Full write-up, with the before-and-after measurements and a forty-line harness that answers "which clock does this API actually use" without a device: https://mcmizzle.com/blog/videotoolbox-early-keyframes-hls-segments/]]></content:encoded>
+    </item>
+    <item>
+      <title><![CDATA[Your tvOS Top Shelf tile is cached, and reinstalling won't clear it]]></title>
+      <link>https://mcmizzle.com/blog/tvos-top-shelf-stale-cache/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/tvos-top-shelf-stale-cache/</guid>
+      <pubDate>Mon, 03 Aug 2026 12:00:00 +0000</pubDate>
+      <description><![CDATA[I spent an evening debugging code that was already correct.
+
+The Top Shelf tile for my tvOS app showed a placeholder instead of its image. The title was right. The progress bar was right. Just no image. I wrote two fixes, both wrong, and the thing that finally worked was rebooting the Apple TV.
+
+The part worth knowing: the system caches the rendered tile, dedupes incoming content against that cache, and the cache survives a changed item identifier and a full uninstall and reinstall of the app.
+
+So if you have ever shipped even one build that handed the Top Shelf a bad item, you can spend hours staring at correct code that produces a wrong screen. Nothing about the symptom suggests a cache, which is exactly why it costs so much time.
+
+What I would carry past tvOS: all of my logging measured what the extension sent. Nothing measured what the system drew, and the two had quietly stopped being the same thing. When a fix that should work changes nothing — not the symptom, not even its shape — stop refining the fix and start asking whether your output is reaching the renderer.
+
+Full write-up, including the exact log lines to search for and what an app extension can and can't do with an App Group: https://mcmizzle.com/blog/tvos-top-shelf-stale-cache/]]></description>
+      <content:encoded><![CDATA[I spent an evening debugging code that was already correct.
+
+The Top Shelf tile for my tvOS app showed a placeholder instead of its image. The title was right. The progress bar was right. Just no image. I wrote two fixes, both wrong, and the thing that finally worked was rebooting the Apple TV.
+
+The part worth knowing: the system caches the rendered tile, dedupes incoming content against that cache, and the cache survives a changed item identifier and a full uninstall and reinstall of the app.
+
+So if you have ever shipped even one build that handed the Top Shelf a bad item, you can spend hours staring at correct code that produces a wrong screen. Nothing about the symptom suggests a cache, which is exactly why it costs so much time.
+
+What I would carry past tvOS: all of my logging measured what the extension sent. Nothing measured what the system drew, and the two had quietly stopped being the same thing. When a fix that should work changes nothing — not the symptom, not even its shape — stop refining the fix and start asking whether your output is reaching the renderer.
+
+Full write-up, including the exact log lines to search for and what an app extension can and can't do with an App Group: https://mcmizzle.com/blog/tvos-top-shelf-stale-cache/]]></content:encoded>
+    </item>
+    <item>
+      <title><![CDATA[Why your HealthKit widget shows zero every morning]]></title>
+      <link>https://mcmizzle.com/blog/healthkit-widget-shows-zero/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/healthkit-widget-shows-zero/</guid>
+      <pubDate>Mon, 27 Jul 2026 12:00:00 +0000</pubDate>
+      <description><![CDATA[My iPhone widget was wrong every morning, and right the moment I opened the app.
+
+The obvious read is that it's stale and needs to refresh harder. That was wrong, and the tell was the timestamp: it said two minutes ago. The data wasn't old. It was freshly wrong, which is a different bug with a different cause, and it rules out every fix in the refresh-scheduling family.
+
+HealthKit encrypts its store while the phone is locked. Background wakes happen while the phone sits on a nightstand, so the reads most likely to fail are precisely the ones running unattended — and a query that fails for that reason reports no sum, identical to a day with genuinely no data.
+
+I had written `?? 0`. So a failure became a confident zero, and every caller downstream got a number that looked like data.
+
+The general version is the part I'd actually keep: any `??`, `try?`, or ignored error parameter whose default is 0 has made failure indistinguishable from data. Zero is uniquely dangerous because it doesn't look like an error state — it renders as a plausible, correctly formatted number that nothing downstream can flag.
+
+Full write-up, with the fix and the second bug that refusing to publish garbage exposed: https://mcmizzle.com/blog/healthkit-widget-shows-zero/]]></description>
+      <content:encoded><![CDATA[My iPhone widget was wrong every morning, and right the moment I opened the app.
+
+The obvious read is that it's stale and needs to refresh harder. That was wrong, and the tell was the timestamp: it said two minutes ago. The data wasn't old. It was freshly wrong, which is a different bug with a different cause, and it rules out every fix in the refresh-scheduling family.
+
+HealthKit encrypts its store while the phone is locked. Background wakes happen while the phone sits on a nightstand, so the reads most likely to fail are precisely the ones running unattended — and a query that fails for that reason reports no sum, identical to a day with genuinely no data.
+
+I had written `?? 0`. So a failure became a confident zero, and every caller downstream got a number that looked like data.
+
+The general version is the part I'd actually keep: any `??`, `try?`, or ignored error parameter whose default is 0 has made failure indistinguishable from data. Zero is uniquely dangerous because it doesn't look like an error state — it renders as a plausible, correctly formatted number that nothing downstream can flag.
+
+Full write-up, with the fix and the second bug that refusing to publish garbage exposed: https://mcmizzle.com/blog/healthkit-widget-shows-zero/]]></content:encoded>
+    </item>
+  </channel>
+</rss>

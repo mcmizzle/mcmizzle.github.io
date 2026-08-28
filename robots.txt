@@ -1,0 +1,27 @@
+User-agent: *
+Allow: /
+
+# Machine feed for the LinkedIn scheduling chain, linked from no page. Nothing
+# in it is secret — it's copy that gets published anyway — but there's no
+# reason for it to turn up in search results. Longest match wins, so this
+# beats the Allow above for this one path.
+Disallow: /blog/social.xml
+
+# The authoring guides. GitHub Pages serves every file in the repo, so these
+# resolve at the domain as well as on github.com, where the repo is public
+# anyway. Nothing here is secret. But they're working notes — house style,
+# rejected topics, unposted draft copy — and they have no business surfacing
+# in a search for this site alongside the pages written for readers.
+Disallow: /README.md
+Disallow: /blog/README.md
+Disallow: /blog/AUTOMATION.md
+Disallow: /blog/CONSIDERED.md
+Disallow: /blog/SOCIAL.md
+
+# The build scripts. Same reason as the guides above, and verified rather than
+# assumed: all four answer 200 at the domain today. A directory rule rather
+# than four filenames, so the next script added to tools/ is covered without
+# anyone remembering this file exists.
+Disallow: /tools/
+
+Sitemap: https://mcmizzle.com/sitemap.xml

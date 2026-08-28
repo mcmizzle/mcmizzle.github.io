@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blog — McMizzle</title>
+<meta name="description" content="Engineering notes from building McMizzle's apps — tvOS, watchOS, HealthKit, BLE, and the parts the documentation leaves out.">
+<link rel="canonical" href="https://mcmizzle.com/blog/">
+<link rel="alternate" type="application/rss+xml" title="McMizzle Blog" href="https://mcmizzle.com/blog/feed.xml">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf6ec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201a13">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mcmizzle.com/blog/">
+<meta property="og:title" content="Blog — McMizzle">
+<meta property="og:description" content="Engineering notes from building McMizzle's apps — tvOS, watchOS, HealthKit, BLE, and the parts the documentation leaves out.">
+<meta property="og:image" content="https://mcmizzle.com/assets/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
+<main>
+  <h1>Blog</h1>
+  <p class="tagline">Engineering notes from building things.</p>
+
+  <p>
+    Write-ups of problems worth writing up — undocumented platform behavior,
+    hardware that talks back, geometry that looks fine and won't print, and
+    bugs whose real cause was three layers away from the symptom.
+    <a href="/blog/feed.xml">RSS</a>.
+  </p>
+
+  <!-- POST LIST: newest first. Add each new post as the first <li>. -->
+  <ul class="post-list">
+    <li>
+      <p class="post-meta">August 25, 2026</p>
+      <span class="post-title"><a href="/blog/videotoolbox-early-keyframes-hls-segments/">VideoToolbox emits keyframes early, and my HLS segments came out twice as long</a></span>
+      <p class="post-summary">
+        One segment a minute came out at double length on a real camera, and
+        never once on synthetic test video. The max keyframe interval is a
+        ceiling, not a schedule — encoders spend keyframes early on scene
+        changes — and it counts the timestamps you supply rather than wall
+        clock. Half of that is documented, on a page about a different
+        property.
+      </p>
+    </li>
+    <li>
+      <p class="post-meta">August 3, 2026</p>
+      <span class="post-title"><a href="/blog/tvos-top-shelf-stale-cache/">Your tvOS Top Shelf tile is cached, and reinstalling won't clear it</a></span>
+      <p class="post-summary">
+        The tile drew a placeholder for hours after the code was correct again.
+        The Home screen caches the rendered tile, dedupes incoming content
+        against it, and that cache survives uninstalling the app — only a reboot
+        cleared it. Plus what actually works for getting logs out of a tvOS
+        extension, and what an extension can and can't do with an App Group.
+      </p>
+    </li>
+    <li>
+      <p class="post-meta">July 27, 2026</p>
+      <span class="post-title"><a href="/blog/healthkit-widget-shows-zero/">Why your HealthKit widget shows zero every morning</a></span>
+      <p class="post-summary">
+        The widget was wrong every morning and right the moment I opened the
+        app — but its timestamp was fresh, so it wasn't stale, it was freshly
+        wrong. HealthKit's store is encrypted while the phone is locked, and a
+        query that fails for that reason is indistinguishable from a day with
+        no data unless you read the error.
+      </p>
+    </li>
+  </ul>
+  <!-- END POST LIST -->
+</main>
+<footer>
+  <nav class="footer-links">
+    <a href="/about/">About</a> &middot;
+    <a href="/blog/">Blog</a> &middot;
+    <a href="/printing/">3D printing</a> &middot;
+    <a href="/support/">Support</a> &middot;
+    <a href="/privacy/">Privacy</a> &middot;
+    <a href="/blog/feed.xml">RSS</a> &middot;
+    <a href="https://www.linkedin.com/in/mcmizzle">LinkedIn</a>
+  </nav>
+  <p class="footer-legal">&copy; 2026 Kevin McMahon (McMizzle)</p>
+</footer>
+</body>
+</html>

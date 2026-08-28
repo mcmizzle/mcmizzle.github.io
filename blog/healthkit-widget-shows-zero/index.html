@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why your HealthKit widget shows zero every morning — McMizzle</title>
+<meta name="description" content="A HealthKit query that fails because the phone is locked returns no sum — exactly like a day with no samples. If you coerce that to 0, you publish a lie.">
+<link rel="canonical" href="https://mcmizzle.com/blog/healthkit-widget-shows-zero/">
+<link rel="alternate" type="application/rss+xml" title="McMizzle Blog" href="https://mcmizzle.com/blog/feed.xml">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf6ec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201a13">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://mcmizzle.com/blog/healthkit-widget-shows-zero/">
+<meta property="og:title" content="Why your HealthKit widget shows zero every morning — McMizzle">
+<meta property="og:description" content="A HealthKit query that fails because the phone is locked returns no sum — exactly like a day with no samples. If you coerce that to 0, you publish a lie.">
+<meta property="og:image" content="https://mcmizzle.com/assets/og-healthkit-widget-shows-zero.png">
+<meta property="article:published_time" content="2026-07-27">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
+<main>
+<article class="post">
+  <h1>Why your HealthKit widget shows zero every morning</h1>
+  <p class="post-meta">Kevin McMahon · July 27, 2026</p>
+
+  <p>
+    My iPhone widget was wrong every morning.
+    <a href="/calorieburndown/">Calorie Burndown</a> shows how much
+    of a calorie deficit you have left for the day, and every morning it showed
+    the entire goal still remaining — nothing eaten, nothing burned, as if the
+    day hadn't started. Opening the app fixed it instantly and it stayed correct
+    for the rest of the day. The next morning it was wrong again.
+  </p>
+
+  <p>
+    The obvious explanation is that the widget was stale, and the obvious fix is
+    to make it refresh more aggressively. That explanation was wrong, and I want
+    to save you the detour, because searching for this symptom turns up a lot of
+    advice about App Group misconfiguration, background-delivery throttling, and
+    <code>reloadAllTimelines()</code> being ignored in the background. All of
+    those are real problems. None of them was this one.
+  </p>
+
+  <h2>The timestamp was the tell</h2>
+
+  <p>
+    The widget renders an "Updated" time in its footer. On those broken mornings
+    that timestamp read a couple of minutes old — not from last night. So a write
+    really had happened, recently. The data wasn't stale. It was freshly wrong,
+    which is a different bug with a different cause, and it immediately rules out
+    the entire category of fixes above. Nothing about redraw scheduling can
+    explain a redraw that happened on time with bad numbers in it.
+  </p>
+
+  <p>
+    The second clue was arithmetic. The number on the widget is
+    <code>goal - (basal + active - consumed)</code>. For the remaining deficit to
+    equal the whole goal exactly, that inner expression has to be exactly zero —
+    which, given basal energy alone is never zero over a real day, means all
+    three values were zero simultaneously. Three independent HealthKit reads
+    returning zero at the same instant is not a data problem. It's a read
+    problem.
+  </p>
+
+  <h2>HealthKit is encrypted when the phone is locked</h2>
+
+  <p>
+    This part is documented, and I'd read the page before without connecting it
+    to the symptom. From Apple's
+    <a href="https://developer.apple.com/documentation/healthkit/protecting-user-privacy">Protecting user privacy</a>:
+  </p>
+
+  <blockquote>
+    <p>
+      The user's device stores all HealthKit data locally. For security, the
+      device encrypts the HealthKit store when the user locks the device. As a
+      result, your app may not be able to read data from the store when it runs
+      in the background. However, your app can still write to the store, even
+      when the phone is locked.
+    </p>
+  </blockquote>
+
+  <p>
+    Now put that next to when background wakes actually happen. A HealthKit
+    observer wake, or a background app refresh, fires while the phone is sitting
+    on a nightstand — locked, by definition, most of the time. So the reads that
+    are <em>most</em> likely to fail are precisely the ones running unattended,
+    and the ones that succeed are the ones you're standing there watching, which
+    is why this never reproduced while I was looking at it.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what's a background wake?</summary>
+    <p>
+      An app on iOS isn't running most of the time. Instead of letting it sit
+      there burning battery, the system freezes it and wakes it briefly when
+      something relevant happens — new health data was recorded, or it's simply
+      been a while. The app gets a few seconds to do its work and is put back
+      to sleep.
+    </p>
+    <p>
+      The catch is that you don't choose when this happens. The system does,
+      and it mostly happens while the phone is untouched — which for a phone
+      means locked.
+    </p>
+  </details>
+
+  <p>
+    What the documentation doesn't tell you is the shape of that failure, and
+    the shape is the whole bug.
+  </p>
+
+  <h2>A failed query and an empty day are the same object</h2>
+
+  <p>
+    Here is the sum helper I had, reduced to the part that matters:
+  </p>
+
+  <pre><code>// Before: the error is discarded.
+let query = HKStatisticsQuery(
+    quantityType: type,
+    quantitySamplePredicate: predicate,
+    options: .cumulativeSum
+) { _, result, _ in
+    let value = result?.sumQuantity()?.doubleValue(for: unit) ?? 0
+    continuation.resume(returning: Int(value.rounded()))
+}
+</code></pre>
+
+  <p>
+    That third closure parameter is the error, and I had it bound to <code>_</code>.
+    Look at what happens on a locked device. The query fails, so
+    <code>result</code> is nil, so <code>sumQuantity()</code> is never reached,
+    so the <code>?? 0</code> fires and the function returns <strong>0</strong> —
+    a perfectly ordinary <code>Int</code>, indistinguishable from a genuine day
+    with no samples in it. There is no signal left. Every caller downstream got
+    a number that looked like data.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what does <code>?? 0</code> do?</summary>
+    <p>
+      In Swift, a value that might be missing has to say so in its type, and
+      you can't use it until you've dealt with the missing case. The
+      <code>??</code> operator is the quickest way to deal with it: "use this
+      value, or if it's missing, use that one instead." So <code>?? 0</code>
+      means "or zero."
+    </p>
+    <p>
+      It's a convenience that quietly answers a question you may not have meant
+      to answer. "I don't have a number" and "the number is zero" are very
+      different statements, and <code>?? 0</code> turns the first into the
+      second without comment.
+    </p>
+  </details>
+
+  <p>
+    So the overnight sequence was: wake while locked, fail every read, coerce all
+    three energy values to zero, compute a day in which nothing had been eaten or
+    burned, publish it to the widget with a current timestamp, and go back to sleep.
+    Every subsequent locked wake did the same thing again. Nothing corrected it
+    until a foreground launch — which by definition happens with the phone
+    unlocked — finally read something real. That accounts for every part of what
+    I'd been seeing, including the "fixes itself the moment I open the app" part
+    that had me chasing widget refresh in the first place.
+  </p>
+
+  <p>
+    The fix is to stop throwing the error away, and to distinguish the one error
+    that <em>is</em> a legitimate zero:
+  </p>
+
+  <pre><code>// After: nil means "we don't know", 0 means "we know, and it's none".
+{ _, result, error in
+    if let error {
+        // errorNoData is HealthKit's way of saying the range is empty,
+        // which is a real, publishable 0.
+        guard (error as? HKError)?.code != .errorNoData else {
+            continuation.resume(returning: 0)
+            return
+        }
+        continuation.resume(returning: nil)   // Int?
+        return
+    }
+    let value = result?.sumQuantity()?.doubleValue(for: unit) ?? 0
+    continuation.resume(returning: Int(value.rounded()))
+}
+</code></pre>
+
+  <p>
+    Apple does define a specific code for this case —
+    <a href="https://developer.apple.com/documentation/healthkit/hkerror/code/errordatabaseinaccessible"><code>HKError.Code.errorDatabaseInaccessible</code></a>,
+    documented as "The HealthKit data is unavailable because it's protected and
+    the device is locked" — and you could match on it directly. I deliberately
+    didn't. I treat
+    <a href="https://developer.apple.com/documentation/healthkit/hkerror/code/errornodata"><code>errorNoData</code></a>
+    as a real zero and <em>everything else</em> as a failure, because I only want
+    to enumerate the errors that are safe to publish, not the ones that aren't.
+    In fairness I should say I have not confirmed on-device which code actually
+    comes back here: reproducing it needs a locked phone during a real background
+    wake, so that specific detail is inference from the documentation rather than
+    something I watched happen.
+  </p>
+
+  <p>
+    Since writing that, I found a
+    <a href="https://developer.apple.com/forums/thread/824819">May 2026 Developer Forums answer</a>
+    from an Apple DTS engineer that settles the general rule as plainly as
+    you could want: <em>"For privacy reasons, your app is not allowed to read
+    health data while a device is locked, though it can still save data, which
+    is then saved into a temporary file and merged with HealthKit's data when
+    the user unlocks their device."</em> That reply points at
+    <code>errorDatabaseInaccessible</code> for this case, which is good
+    corroboration — though it's still Apple describing the behavior rather than
+    me watching a specific code come back, so I'm leaving the caveat above
+    standing. Worth knowing the answer exists, because it took me a while to
+    find and it isn't in the framework documentation.
+  </p>
+
+  <h2>One guard wasn't enough</h2>
+
+  <p>
+    Making the read return <code>Int?</code> only moves the problem up a level.
+    The refresh routine now returns a Bool and, on failure, leaves every
+    published value untouched and skips its "I have new data" callback entirely —
+    it does nothing rather than committing zeros.
+  </p>
+
+  <p>
+    That still wasn't sufficient, and this is the part I'd have missed if I
+    hadn't gone looking for other entry points. The callback is not the only way
+    data reaches the widget: the app's launch task and the background refresh
+    manager both call the sync routine <em>directly</em>, not via that callback.
+    A process that had never managed a single successful read would still cheerfully
+    publish its freshly-initialized zeros. So the store that writes the widget's
+    payload now refuses to write anything at all until a read has actually
+    succeeded in that process — tracked as a nullable "last successful refresh"
+    date, where nil means "these values are still just their initial zeros," which
+    is not the same claim as "the user has consumed nothing today."
+  </p>
+
+  <p>
+    The general form: if you fix this at the read, audit every path that
+    publishes. A default-initialized model object is full of zeros too, and those
+    zeros are just as plausible as the ones a failed query produces.
+  </p>
+
+  <h2>The related bug it exposed</h2>
+
+  <p>
+    Refusing to publish garbage means the widget can now show yesterday's
+    numbers, which is correct but needs saying out loud. The payload already
+    carried an "updated at" date, but that answers <em>when it was written</em>,
+    not <em>which day it describes</em> — and those are different questions the
+    moment a write can be skipped. So the payload now also carries the start of
+    the day its numbers are about, and the phone widget asks whether that
+    day is still today. If it isn't, it draws in a muted color with a
+    dated footer and a "tap to refresh" line, instead of asserting yesterday's
+    figures in the confident green of a goal you've already met. It also emits a
+    timeline entry at the next midnight so that flip lands on the day boundary
+    even if no refresh gets a chance to run.
+  </p>
+
+  <p>
+    That sentence originally read "anything rendering it," which was the intent
+    rather than the state of the code. Two weeks after this was published I found
+    that the watch app and the watch complication both carried the new field
+    faithfully through to their own render paths and then never looked at it, so
+    both would present yesterday's numbers in confident green under a bare
+    "Updated 3:02 AM" — the exact presentation the phone widget had just been
+    fixed to stop making. Worse, the code choosing between a relayed phone
+    payload and a locally computed one still ordered on write time alone, so a
+    payload describing yesterday but stamped "now" strictly outranked a current
+    one. Both are fixed now. I'm leaving the correction visible rather than
+    quietly restating it, because the failure is the more useful half: adding the
+    field was the easy part, and a field only helps where somebody actually reads
+    it.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what's a timeline entry?</summary>
+    <p>
+      A home-screen widget doesn't get to run whenever it likes — it would
+      drain the battery. Instead the app hands the system a short script ahead
+      of time: "show this now, and at midnight show that instead." Each of
+      those is a timeline entry.
+    </p>
+    <p>
+      So a widget can change on schedule without the app being awake at all.
+      The flip is written in advance and the system performs it.
+    </p>
+  </details>
+
+  <p>
+    Both fields decode leniently so payloads written by older builds still load.
+    That mattered more than usual here, because the phone relays the same payload
+    to a watch that may be running a different build.
+  </p>
+
+  <h2>What I'd tell you to check first</h2>
+
+  <p>
+    If a value in your app is wrong in a way that looks like "nothing happened
+    today," find every place you turned a failure into a default with
+    <code>??</code>, <code>try?</code>, or an ignored error parameter — and ask
+    what that default renders as. Zero is uniquely dangerous, because zero is a
+    legitimate value in almost every domain. It doesn't look like an error state.
+    It renders as a confident, plausible, correctly-formatted number, and nothing
+    downstream — no view, no test, no person glancing at a widget — has any way
+    to tell it apart from the truth. An error you swallow becomes indistinguishable
+    from data you trust.
+  </p>
+
+  <p>
+    Concretely, for HealthKit: an empty result and a failed query are the same
+    object unless you look at the <code>error</code> parameter, the most common
+    real-world cause of failure is a locked device, and a locked device is the
+    normal condition for exactly the background work you can't watch.
+  </p>
+
+  <p>
+    I first ended this by saying that publishing nothing is nearly always better
+    than publishing a zero. That's too broad, and at the time my own code broke
+    it deliberately: the per-day helpers behind the thirty-day history chart
+    coerced a failed read to zero, on the grounds that a backfill would rather
+    draw one flat day than refuse to draw the month. The narrower rule is the one
+    worth carrying — <strong>a default is safe exactly when whatever consumes it
+    can tell "none" apart from "don't know."</strong> I thought a history chart
+    could: one flat day sits in thirty days of context and reads as the anomaly
+    it is. A single-number widget can't, because the number is the entire
+    interface and there is nothing beside it to disagree with. Same query, same
+    failure, opposite call — and what decides it isn't the data, it's what
+    renders it. A missing number makes a user tap; a wrong one makes them trust
+    it.
+  </p>
+
+  <p>
+    Those helpers are gone now, and how they went is a better argument for the
+    rule than my exception to it was. Sixteen days after this was published, the
+    week card on the main screen read "0/7 days hit" over a week that had been
+    7/7, with a weekly figure that was exactly the daily goal times seven — while
+    the live numbers on the same screen were correct. The single flat day I had
+    been picturing is a <em>partial</em> failure. The usual reason these reads
+    fail is a locked device, and a locked device fails all thirty days at once,
+    so what the chart actually gets is thirty well-formed zeros with no context
+    left to read them against. The backfill now abandons the whole load if any
+    one day fails. The rule held; I had checked it against the wrong failure. A
+    consumer can only tell "none" from "don't know" if the failures arrive one
+    at a time, and nothing guarantees they will.
+  </p>
+</article>
+<nav class="post-nav"><a href="/blog/">← All posts</a></nav>
+</main>
+<footer>
+  <nav class="footer-links">
+    <a href="/about/">About</a> &middot;
+    <a href="/blog/">Blog</a> &middot;
+    <a href="/printing/">3D printing</a> &middot;
+    <a href="/support/">Support</a> &middot;
+    <a href="/privacy/">Privacy</a> &middot;
+    <a href="/blog/feed.xml">RSS</a> &middot;
+    <a href="https://www.linkedin.com/in/mcmizzle">LinkedIn</a>
+  </nav>
+  <p class="footer-legal">&copy; 2026 Kevin McMahon (McMizzle)</p>
+</footer>
+</body>
+</html>
