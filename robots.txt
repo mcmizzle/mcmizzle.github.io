@@ -7,21 +7,25 @@ Allow: /
 # beats the Allow above for this one path.
 Disallow: /blog/social.xml
 
-# The authoring guides. GitHub Pages serves every file in the repo, so these
-# resolve at the domain as well as on github.com, where the repo is public
-# anyway. Nothing here is secret. But they're working notes — house style,
-# rejected topics, unposted draft copy — and they have no business surfacing
-# in a search for this site alongside the pages written for readers.
+# The publish repo's own README, which says that repo is generated and that
+# edits belong here instead. It is the one file served at the domain that
+# isn't part of this repo at all — the sync preserves it rather than writing
+# it — and it is not a page anyone should land on from a search.
 Disallow: /README.md
-Disallow: /blog/README.md
-Disallow: /blog/AUTOMATION.md
-Disallow: /blog/CONSIDERED.md
-Disallow: /blog/SOCIAL.md
 
-# The build scripts. Same reason as the guides above, and verified rather than
-# assumed: all four answer 200 at the domain today. A directory rule rather
-# than four filenames, so the next script added to tools/ is covered without
-# anyone remembering this file exists.
-Disallow: /tools/
+# The authoring guides and tools/ used to be excluded here, because a single
+# public repo served every file in itself. They are not excluded any more
+# because they are no longer served at all: this repo is the source and
+# `mcmizzle/mcmizzle.github.io` is what Pages publishes, and the copy set in
+# tools/publish-copy.sh drops every Markdown file and the whole of tools/.
+# Verified after the 2026-08-27 cutover rather than assumed — /blog/README.md,
+# /blog/AUTOMATION.md, /blog/CONSIDERED.md, /blog/SOCIAL.md and all four
+# scripts under /tools/ answer 404 at the domain, where they answered 200
+# before it.
+#
+# So the rule for what belongs in this file has changed. It is no longer
+# "anything in the repo that isn't a page", which was a much larger set — it
+# is only the handful of files that are genuinely published and genuinely
+# aren't pages. Something new only belongs here if it survives the copy set.
 
 Sitemap: https://mcmizzle.com/sitemap.xml
