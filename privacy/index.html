@@ -31,8 +31,8 @@
     because there isn't one — every McMizzle app talks directly to the
     services you've chosen to connect it to (like Bambu Lab or YouTube), to
     Apple's own on-device frameworks (like HealthKit), or to your own iCloud
-    account to keep an app's own settings in step across your devices, and
-    nowhere else.
+    account to keep an app's own settings and history in step across your
+    devices, and nowhere else.
   </p>
 
   <h2>What McMizzle apps store, and where</h2>
@@ -111,9 +111,10 @@
 
   <h2>Retention, deletion, and revoking access</h2>
   <p>
-    Because everything lives on your own device rather than on a McMizzle
-    server, you control all of it directly and nothing has to be requested
-    from McMizzle:
+    Nothing here has to be requested from McMizzle, because none of it reaches
+    McMizzle. Almost all of it lives on your own device, where you control it
+    directly; the exception is what an app syncs to your iCloud, which sits in
+    your Apple Account and is covered by the last point below:
   </p>
   <ul>
     <li><strong>Account credentials and access tokens</strong> (AmbientCast's
@@ -126,8 +127,10 @@
       by the app — it's read from Apple's HealthKit on demand. Revoke that
       access any time in the iOS Settings app under Privacy &amp; Security →
       Health, or in the Health app itself.</li>
-    <li><strong>App settings and cached status</strong> are stored locally
-      and are removed along with the app when you delete it.</li>
+    <li><strong>App settings and cached status</strong> are stored locally and
+      are removed along with the app when you delete it — except for the
+      settings an app syncs to iCloud, such as Calorie Burndown's goals, which
+      are covered by the next point.</li>
     <li><strong>Anything synced through iCloud</strong> is held in your own
       Apple Account, so — unlike everything above — it is <em>not</em>
       removed by deleting the app. Signing out of iCloud on a device stops
