@@ -60,8 +60,8 @@
       <strong>iCloud sync</strong> — some apps keep a small amount of their
       own data in step across your devices using Apple's iCloud. This is
       Apple's storage inside <em>your</em> Apple Account, not a McMizzle
-      server: McMizzle cannot read it, and it stops as soon as you turn
-      iCloud off for that app in the iOS Settings app. What syncs today:
+      server: McMizzle cannot read it, and it stops as soon as you sign out
+      of iCloud on that device. What syncs today:
       <ul>
         <li><strong>Calorie Burndown</strong> — your goal settings: target
           weight, target date, and any manual overrides you have entered.
@@ -69,7 +69,9 @@
           from HealthKit is ever written to iCloud.</li>
         <li><strong>AmbientCast</strong> — your custom watermark image, and
           the list of timelapses the app has published to YouTube (video
-          identifiers, titles, printer names, and publish times).</li>
+          identifiers, titles, printer names, publish times, and whether the
+          print failed), including a record of which entries you have since
+          removed from that list.</li>
       </ul>
     </li>
   </ul>
@@ -128,16 +130,16 @@
       and are removed along with the app when you delete it.</li>
     <li><strong>Anything synced through iCloud</strong> is held in your own
       Apple Account, so — unlike everything above — it is <em>not</em>
-      removed by deleting the app. Turn off iCloud for that app in the iOS
-      Settings app to stop it syncing, and remove what is already there under
-      Settings → your name → iCloud → Manage Account Storage. Both are
-      controls Apple gives you directly, in your account rather than in the
-      app.</li>
+      removed by deleting the app. Signing out of iCloud on a device stops
+      that device syncing. What is already in your Apple Account stays there,
+      under Apple's control rather than McMizzle's: there is no McMizzle copy
+      of it, and nothing to request from McMizzle, because it never reaches
+      us.</li>
   </ul>
   <p>
-    Deleting a McMizzle app removes everything on your device, and anything it
-    kept in your iCloud can be removed from your Apple Account as described
-    above. Since no copy is ever sent to a McMizzle server, there is nothing
+    Deleting a McMizzle app removes everything on your device. Whatever an app
+    synced through iCloud remains in your Apple Account, where McMizzle cannot
+    reach it. Since no copy is ever sent to a McMizzle server, there is nothing
     left behind for you to request the deletion of, and no deletion request to
     make.
   </p>
