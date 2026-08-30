@@ -173,6 +173,10 @@
     <li><code>thumbnails.set</code> — to set the finished broadcast's
       thumbnail to a still frame of your own completed print, once, when a
       broadcast you started ends.</li>
+    <li><code>liveBroadcasts.list</code> / <code>liveStreams.list</code> — to
+      read back the state of broadcasts and streams on your own channel:
+      whether one this app created is still live, which stream is bound to it,
+      and whether YouTube is receiving video yet.</li>
     <li><code>videos.insert</code> — to upload a short timelapse of your own
       completed print to your own channel, if you've turned that on. The
       timelapse is assembled on your device from your own printer's camera
@@ -186,8 +190,19 @@
     no other videos, playlists, subscriptions, comments, or channel
     settings. Every one of these calls is a direct consequence of something
     you started: a broadcast you began yourself, or a print you chose to have
-    a timelapse made of. AmbientCast never creates, modifies, or ends a
-    broadcast, and never uploads anything, on its own.
+    a timelapse made of. AmbientCast never creates a broadcast, and never
+    uploads anything, on its own — and never ends one either, with the single
+    exception described next.
+  </p>
+  <p>
+    <strong>The one thing it does without being asked.</strong> At launch,
+    AmbientCast looks for live broadcasts left running by a previous session
+    of the app — a print that ended while the Apple TV was asleep, or the app
+    replaced mid-stream — and ends them, telling you it has done so. Without
+    this, a dead broadcast can sit live on your channel indefinitely. It will
+    only end a broadcast that <em>both</em> carries AmbientCast's own title
+    suffix <em>and</em> has nothing currently publishing to it, so a stream
+    you are running from another device or another tool is never touched.
   </p>
   <p>
     <strong>Data protection.</strong> Your OAuth access and refresh tokens
@@ -205,9 +220,13 @@
     revoke AmbientCast's access directly from Google at
     <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>
     (which invalidates them on Google's side even if the local copy hasn't
-    been cleared yet). No copy of these tokens, or of anything read/written
-    using them, is ever retained anywhere off your device — there is no
-    McMizzle-operated server for any of it to be retained on.
+    been cleared yet). No copy of these tokens is ever retained anywhere off
+    your device — there is no McMizzle-operated server for any of it to be
+    retained on. One thing derived from these calls does leave your device:
+    the list of timelapses you have published, including their video
+    identifiers and titles, syncs through your own iCloud account as described
+    under "What McMizzle apps store, and where". The tokens themselves never
+    do, and nothing derived from them ever reaches McMizzle.
   </p>
   <p>
     <strong>Limited Use.</strong> AmbientCast's use of information received
