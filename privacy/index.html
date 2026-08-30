@@ -47,7 +47,10 @@
     <li>
       <strong>Health &amp; fitness data</strong> (e.g. Calorie Burndown's use of
       HealthKit) is read directly from Apple's HealthKit on your device and
-      never leaves it, governed by Apple's own HealthKit privacy rules.
+      never leaves it, governed by Apple's own HealthKit privacy rules. Today's
+      totals are written to an on-device App Group container so the widgets and
+      watch complication can display them — a widget runs as a separate process
+      and cannot reliably query HealthKit itself.
     </li>
     <li>
       <strong>App settings and cached status</strong> (e.g. printer connection
@@ -123,10 +126,12 @@
       which deletes them immediately and on-device. For YouTube you can also
       revoke AmbientCast's access at
       <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</li>
-    <li><strong>Health &amp; fitness data</strong> is never copied or stored
-      by the app — it's read from Apple's HealthKit on demand. Revoke that
-      access any time in the iOS Settings app under Privacy &amp; Security →
-      Health, or in the Health app itself.</li>
+    <li><strong>Health &amp; fitness data</strong> is read from Apple's
+      HealthKit on demand and is not kept beyond what your widgets and watch
+      complication need to show today's figures — those are held in an
+      on-device App Group container, never sent anywhere, and removed with the
+      app. Revoke HealthKit access any time in the iOS Settings app under
+      Privacy &amp; Security → Health, or in the Health app itself.</li>
     <li><strong>App settings and cached status</strong> are stored locally and
       are removed along with the app when you delete it — except for the
       settings an app syncs to iCloud, such as Calorie Burndown's goals, which
