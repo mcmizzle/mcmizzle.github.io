@@ -10,6 +10,13 @@
     <!-- ITEMS: newest first. Add each new post as the first <item>.
          pubDate must be RFC-822, e.g. Fri, 07 Aug 2026 12:00:00 +0000 -->
     <item>
+      <title>Watertight, on the bed, and the wrong shape</title>
+      <link>https://mcmizzle.com/blog/watertight-mesh-wrong-shape/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/watertight-mesh-wrong-shape/</guid>
+      <pubDate>Tue, 01 Sep 2026 12:00:00 +0000</pubDate>
+      <description>A plate printed with 4 mm tongues of material reaching into openings that should have had a 1.4 mm border, and every printability check was green. Offsetting a polygon by moving its vertices spikes at sharp corners and folds through itself at tight curves — and an even-odd fill closes a folded ring as happily as a good one, so the mesh comes out watertight, island-free and slicing clean.</description>
+    </item>
+    <item>
       <title>VideoToolbox emits keyframes early, and my HLS segments came out twice as long</title>
       <link>https://mcmizzle.com/blog/videotoolbox-early-keyframes-hls-segments/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/videotoolbox-early-keyframes-hls-segments/</guid>

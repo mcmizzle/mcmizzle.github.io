@@ -7,6 +7,34 @@
     <language>en-us</language>
     <atom:link href="https://mcmizzle.com/blog/social.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title><![CDATA[Watertight, on the bed, and the wrong shape]]></title>
+      <link>https://mcmizzle.com/blog/watertight-mesh-wrong-shape/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/watertight-mesh-wrong-shape/</guid>
+      <pubDate>Tue, 01 Sep 2026 12:00:00 +0000</pubDate>
+      <description><![CDATA[A part came off my 3D printer with 4 mm tongues of plastic reaching into openings that were supposed to have a clean 1.4 mm border. Every automated check I run before printing was green, and had been for months.
+
+They were all correct. That's the part I keep thinking about.
+
+Those checks ask whether the model is a sealed, printable solid — no holes in the surface, nothing floating in mid-air, the slicer accepts it. Not one asks whether it's the shape I actually drew. You don't usually need that second question, because you drew the thing and can see it. I generate mine in code, so nobody ever looks.
+
+The bug was in shrinking a shape by a fixed distance. The obvious method — move every corner inward — falls apart twice: it flings sharp corners off into space, and where the outline curves tighter than the distance you're shrinking by, it turns inside out and crosses itself. A self-crossing outline still encloses something, so the model comes out sealed, printable, and wrong.
+
+The general version isn't really about 3D printing. A validity check tells you an artefact is well-formed. It does not tell you it's the artefact you meant. If you generate your output rather than authoring it by hand, that gap is where your bugs will live.
+
+Full write-up, with the measurements, the twenty-line test that catches it, and the check I nearly shipped instead that fires on perfectly good geometry: https://mcmizzle.com/blog/watertight-mesh-wrong-shape/]]></description>
+      <content:encoded><![CDATA[A part came off my 3D printer with 4 mm tongues of plastic reaching into openings that were supposed to have a clean 1.4 mm border. Every automated check I run before printing was green, and had been for months.
+
+They were all correct. That's the part I keep thinking about.
+
+Those checks ask whether the model is a sealed, printable solid — no holes in the surface, nothing floating in mid-air, the slicer accepts it. Not one asks whether it's the shape I actually drew. You don't usually need that second question, because you drew the thing and can see it. I generate mine in code, so nobody ever looks.
+
+The bug was in shrinking a shape by a fixed distance. The obvious method — move every corner inward — falls apart twice: it flings sharp corners off into space, and where the outline curves tighter than the distance you're shrinking by, it turns inside out and crosses itself. A self-crossing outline still encloses something, so the model comes out sealed, printable, and wrong.
+
+The general version isn't really about 3D printing. A validity check tells you an artefact is well-formed. It does not tell you it's the artefact you meant. If you generate your output rather than authoring it by hand, that gap is where your bugs will live.
+
+Full write-up, with the measurements, the twenty-line test that catches it, and the check I nearly shipped instead that fires on perfectly good geometry: https://mcmizzle.com/blog/watertight-mesh-wrong-shape/]]></content:encoded>
+    </item>
+    <item>
       <title><![CDATA[VideoToolbox emits keyframes early, and my HLS segments came out twice as long]]></title>
       <link>https://mcmizzle.com/blog/videotoolbox-early-keyframes-hls-segments/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/videotoolbox-early-keyframes-hls-segments/</guid>
