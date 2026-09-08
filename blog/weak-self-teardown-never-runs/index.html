@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your teardown is queue.async { [weak self] }, so it might never run — McMizzle</title>
+<meta name="description" content="A one-shot queue.async with [weak self] turns guaranteed cleanup into best-effort. If the object dies first the block does nothing, and nothing logs it.">
+<link rel="canonical" href="https://mcmizzle.com/blog/weak-self-teardown-never-runs/">
+<link rel="alternate" type="application/rss+xml" title="McMizzle Blog" href="https://mcmizzle.com/blog/feed.xml">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf6ec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201a13">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://mcmizzle.com/blog/weak-self-teardown-never-runs/">
+<meta property="og:title" content="Your teardown is queue.async { [weak self] }, so it might never run — McMizzle">
+<meta property="og:description" content="A one-shot queue.async with [weak self] turns guaranteed cleanup into best-effort. If the object dies first the block does nothing, and nothing logs it.">
+<meta property="og:image" content="https://mcmizzle.com/assets/og-weak-self-teardown-never-runs.png">
+<meta property="article:published_time" content="2026-09-08">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
+<main>
+<article class="post">
+  <h1>Your teardown is queue.async { [weak self] }, so it might never run</h1>
+  <p class="post-meta">Kevin McMahon · September 8, 2026</p>
+
+  <p>
+    I spent an evening on a Picture in Picture window that kept freezing on
+    tvOS, ran nine experiments against it, and refuted all nine. Then I read the
+    teardown path — which none of the nine had touched — and found a cleanup
+    that releases two hardware video sessions and may never have been running.
+  </p>
+
+  <p>
+    It was not the freeze. That one is still open. But it was a real bug in
+    <a href="/ambientcast/">AmbientCast</a>, and the reason I had never noticed
+    it is the part worth writing down: there was nothing to notice. A cleanup
+    that silently does nothing looks exactly like a cleanup that worked.
+  </p>
+
+  <h2>The pattern</h2>
+
+  <p>
+    Reduced to the shape, with the project-specific parts taken out:
+  </p>
+
+  <pre><code>final class Compositor {
+    private let queue = DispatchQueue(label: "compositor")
+    private var encoder: VTCompressionSession?
+    private var decoder: VTDecompressionSession?
+
+    func stop() {
+        queue.async { [weak self] in
+            self?.invalidateSessions()
+        }
+    }
+}
+</code></pre>
+
+  <p>
+    <code>stop()</code> hands the teardown to the object's own serial queue,
+    because the two sessions are queue-confined state and touching them from
+    the caller's thread would be a data race. And <code>[weak self]</code>,
+    because you always write <code>[weak self]</code>.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what is <code>[weak self]</code>?</summary>
+    <p>
+      When you hand a block of work to something that will run it later, the
+      block normally keeps the object it belongs to alive until it runs. If the
+      object is also holding on to the block, neither can ever be freed — they
+      keep each other alive forever. Writing <code>[weak self]</code> tells the
+      block not to keep the object alive, which breaks that knot. The trade is
+      that the object may be gone by the time the block runs, and then the block
+      does nothing.
+    </p>
+  </details>
+
+  <p>
+    The caller, meanwhile, does something like this — and in my case it is a
+    video source switch, which releases the whole pipeline and builds a new one:
+  </p>
+
+  <pre><code>compositor.stop()
+compositor = nil        // or the owner is released, and takes it along
+</code></pre>
+
+  <p>
+    Which is a race with a clear favourite. <code>queue.async</code> retains the
+    <em>queue</em> until the block runs. It does not retain <code>self</code>,
+    because you asked it not to. So the last strong reference to the compositor
+    can go away on the calling thread while the block is still sitting in the
+    queue, and when the block finally runs, <code>self</code> is nil,
+    <code>self?.invalidateSessions()</code> evaluates to nothing, and the
+    teardown is skipped.
+  </p>
+
+  <p>
+    No error. No warning. <code>stop()</code> returned successfully, the object
+    deallocated cleanly, and every instrument I had said the shutdown went fine.
+  </p>
+
+  <h2>Memory is the case where this is safe</h2>
+
+  <p>
+    If <code>invalidateSessions()</code> were only dropping Swift objects, none
+    of this would matter. ARC would free them when the compositor died, which is
+    exactly what just happened. <code>[weak self]</code> is harmless there, and
+    that is why the habit exists.
+  </p>
+
+  <p>
+    It stops being harmless the moment the cleanup releases something ARC does
+    not manage. Here it was two VideoToolbox sessions.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what is a VideoToolbox session?</summary>
+    <p>
+      VideoToolbox is Apple's low-level video encoding and decoding framework. A
+      "session" is a handle to a configured encoder or decoder, and on Apple
+      hardware that usually means a slice of a dedicated video chip rather than
+      ordinary memory. The chip can only run so many at once, and it is shared
+      with every other app on the device.
+    </p>
+  </details>
+
+  <p>
+    Apple's documentation for
+    <a href="https://developer.apple.com/documentation/videotoolbox/vtcompressionsessioninvalidate(_:)"><code>VTCompressionSessionInvalidate</code></a>
+    puts it precisely:
+  </p>
+
+  <blockquote>
+    <p>
+      A compression session is automatically invalidated when its retain count
+      reaches zero, but because sessions may be retained by multiple parties,
+      it’s hard to predict when this will happen. Calling
+      <code>VTCompressionSessionInvalidate</code> ensures a deterministic,
+      orderly teardown.
+    </p>
+  </blockquote>
+
+  <p>
+    The page for
+    <a href="https://developer.apple.com/documentation/videotoolbox/vtdecompressionsessioninvalidate(_:)"><code>VTDecompressionSessionInvalidate</code></a>
+    says the same thing about decoders.
+  </p>
+
+  <p>
+    That is a warning, not a reassurance. The first clause says the resource does
+    come back eventually. The second says you do not get to know when — and
+    "multiple parties" includes VideoToolbox itself, which holds a session while
+    frames are still in flight. My teardown calls
+    <code>VTCompressionSessionCompleteFrames</code> before it invalidates,
+    precisely because there usually are frames in flight. Skip the block
+    entirely and you have handed a hardware encoder to a retain count you do not
+    control, at the moment you were about to ask for its replacement.
+  </p>
+
+  <h2>The same shape, one file over</h2>
+
+  <p>
+    Same app, different subsystem: the RTMP relay that pushes video to a live
+    stream had an identical <code>stop()</code>, wrapping the call that destroys
+    its ffmpeg context. There, skipping the block abandons a socket rather than
+    closing it.
+  </p>
+
+  <p>
+    The same mistake written twice in one codebase, because
+    <code>[weak self]</code> is what your fingers type. It is the right default
+    for a callback that may fire later. A teardown is not that.
+  </p>
+
+  <h2>The fix: capture self strongly, and add a deinit</h2>
+
+  <pre><code>func stop() {
+    queue.async {                       // strong self, deliberately
+        self.invalidateSessions()
+    }
+}
+
+deinit {
+    // backstop for the paths that never call stop() at all
+    if let decoder { VTDecompressionSessionInvalidate(decoder) }
+    if let encoder { VTCompressionSessionInvalidate(encoder) }
+}
+</code></pre>
+
+  <p>
+    A strong capture keeps the object alive exactly until the teardown has run,
+    and releases it immediately after. There is no cycle to create: the block is
+    one-shot, the queue drains it, and the reference dies with it. The cycle
+    <code>[weak self]</code> defends against needs a closure the object
+    <em>stores</em> — a saved completion handler, a subscription, a repeating
+    timer. A <code>queue.async</code> you never keep a handle to is not one.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what is <code>deinit</code>?</summary>
+    <p>
+      A method that runs at the instant an object is destroyed, after the last
+      thing referring to it has let go. It is the only place you can be certain
+      of getting one final say, which is why it suits handing back something the
+      language will not clean up for you.
+    </p>
+  </details>
+
+  <p>
+    The <code>deinit</code> is a backstop rather than the fix. It covers the
+    paths where <code>stop()</code> is never called at all — an initialiser that
+    throws partway through, an owner released without its teardown hook running.
+    It is safe to touch queue-confined state from there: if <code>deinit</code>
+    is running then nothing else holds a reference, so there is nothing left to
+    race with.
+  </p>
+
+  <p>
+    Both paths log a line now, because the failure being fixed is silence:
+  </p>
+
+  <pre><code>compositor: teardown invalidated its VideoToolbox sessions (had sessions: true)
+compositor: deinit found live VideoToolbox sessions -- stop() did not run
+</code></pre>
+
+  <h2>I cannot tell you how often it fired</h2>
+
+  <p>
+    I found this by reading the code, not by catching it happening. Before the
+    fix there was no breadcrumb on either path, because the failure mode is
+    silence and you do not instrument a path you believe is running. So I do not
+    know whether it lost the race on every source switch, or once a week, or
+    never.
+  </p>
+
+  <p>
+    I had assumed the window was tiny — the release and the queued block both
+    happening in microseconds, with not much room between them. Reading the
+    queue said otherwise. The teardown block goes to the <em>back</em> of a
+    serial queue that admits up to four frames at a time, and each frame is a
+    decode, a composite and an encode — about 24 ms together on average,
+    though the decode alone can spike to nearly 45. So the teardown can sit roughly
+    100 ms behind the work in front of it, and past 250 ms when decode spikes,
+    while the release that orphans it is synchronous and immediate.
+  </p>
+
+  <p>
+    Worse, and this is the part I would check first in your own code:
+    <em>every other</em> <code>queue.async</code> in that class is also
+    <code>[weak self]</code> — the frame path, the synthetic-source path, the
+    encoder's completion hop. So nothing pending on that queue retains the
+    object either. In a codebase where the frame blocks captured strongly, a
+    weak teardown would usually be rescued by accident, because something ahead
+    of it in the queue was holding the thing alive. Here nothing ever was. If
+    you find one of these, look at what else is queued alongside it before
+    deciding you have been getting away with it.
+  </p>
+
+  <p>
+    That uncertainty is the argument for fixing it rather than measuring it
+    first. A race you have no way to observe is not a race you can bound.
+  </p>
+
+  <p>
+    It also explains why nine experiments on real hardware walked straight past
+    it. Every one of them changed something about the <em>running</em>
+    pipeline — the encode resolution, the number of live sessions, the player,
+    the local server, the connections. This is damage done at teardown by code
+    that does not execute, and a running system has nothing to measure.
+  </p>
+
+  <h2>What I'd tell you to check first</h2>
+
+  <p>
+    Grep for <code>[weak self]</code> inside a <code>stop()</code>, a
+    <code>close()</code>, a <code>cancel()</code>, an <code>invalidate()</code>,
+    or anything else whose job is to hand something back. For each one, ask a
+    single question: <strong>if this block does not run, what does not get
+    released?</strong>
+  </p>
+
+  <ul>
+    <li>
+      Swift objects and memory — fine, ARC has it, and the weak capture costs
+      you nothing.
+    </li>
+    <li>
+      A file descriptor, a socket, a C library context, a hardware session, a
+      lock, a registration with another process — not fine. Capture
+      <code>self</code> strongly, and add a <code>deinit</code> for the paths
+      that never reach <code>stop()</code>.
+    </li>
+  </ul>
+
+  <p>
+    The general version, which is the one I keep having to relearn:
+    <strong><code>[weak self]</code> is a statement that this work is
+    optional.</strong> That is usually true of a callback and almost never true
+    of a teardown. If the block has to run, say so — and if what it releases is
+    not memory, <code>deinit</code> is the only place you can say it from and be
+    certain.
+  </p>
+</article>
+<nav class="post-nav"><a href="/blog/">← All posts</a></nav>
+</main>
+<footer>
+  <nav class="footer-links">
+    <a href="/about/">About</a> &middot;
+    <a href="/blog/">Blog</a> &middot;
+    <a href="/printing/">3D printing</a> &middot;
+    <a href="/support/">Support</a> &middot;
+    <a href="/privacy/">Privacy</a> &middot;
+    <a href="/blog/feed.xml">RSS</a> &middot;
+    <a href="https://www.linkedin.com/in/mcmizzle">LinkedIn</a>
+  </nav>
+  <p class="footer-legal">&copy; 2026 Kevin McMahon (McMizzle)</p>
+</footer>
+</body>
+</html>

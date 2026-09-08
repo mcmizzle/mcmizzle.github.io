@@ -36,6 +36,17 @@
   <!-- POST LIST: newest first. Add each new post as the first <li>. -->
   <ul class="post-list">
     <li>
+      <p class="post-meta">September 8, 2026</p>
+      <span class="post-title"><a href="/blog/weak-self-teardown-never-runs/">Your teardown is queue.async { [weak self] }, so it might never run</a></span>
+      <p class="post-summary">
+        A one-shot <code>queue.async</code> that captures <code>[weak self]</code>
+        turns guaranteed cleanup into best-effort work: if the object is released
+        before the block runs, the block does nothing and nothing says so. Fine
+        when the cleanup only drops memory. Not fine when it hands back a
+        hardware VideoToolbox session or an open socket.
+      </p>
+    </li>
+    <li>
       <p class="post-meta">September 1, 2026</p>
       <span class="post-title"><a href="/blog/watertight-mesh-wrong-shape/">Watertight, on the bed, and the wrong shape</a></span>
       <p class="post-summary">

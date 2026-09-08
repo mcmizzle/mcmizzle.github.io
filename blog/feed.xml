@@ -10,6 +10,13 @@
     <!-- ITEMS: newest first. Add each new post as the first <item>.
          pubDate must be RFC-822, e.g. Fri, 07 Aug 2026 12:00:00 +0000 -->
     <item>
+      <title>Your teardown is queue.async { [weak self] }, so it might never run</title>
+      <link>https://mcmizzle.com/blog/weak-self-teardown-never-runs/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/weak-self-teardown-never-runs/</guid>
+      <pubDate>Tue, 08 Sep 2026 12:00:00 +0000</pubDate>
+      <description>A one-shot queue.async that captures [weak self] turns guaranteed cleanup into best-effort work: if the object is released before the block runs, the block does nothing and nothing says so. Fine when the cleanup only drops memory. Not fine when it hands back a hardware VideoToolbox session or an open socket.</description>
+    </item>
+    <item>
       <title>Watertight, on the bed, and the wrong shape</title>
       <link>https://mcmizzle.com/blog/watertight-mesh-wrong-shape/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/watertight-mesh-wrong-shape/</guid>

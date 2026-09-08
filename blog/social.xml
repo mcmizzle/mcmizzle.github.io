@@ -7,6 +7,38 @@
     <language>en-us</language>
     <atom:link href="https://mcmizzle.com/blog/social.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title><![CDATA[Your teardown is queue.async { [weak self] }, so it might never run]]></title>
+      <link>https://mcmizzle.com/blog/weak-self-teardown-never-runs/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/weak-self-teardown-never-runs/</guid>
+      <pubDate>Tue, 08 Sep 2026 12:00:00 +0000</pubDate>
+      <description><![CDATA[I spent an evening chasing a video bug, ran nine experiments against it, and refuted all nine. Then I read a piece of code none of them had touched and found a different bug: a cleanup routine that may never have been running.
+
+An object has to release something when it shuts down, and the release has to happen on a particular background queue. So the shutdown method hands the work to that queue. And because handing work to a queue can accidentally keep objects alive forever, there's a defensive move you learn early and then type without thinking: mark the reference weak — don't keep me alive for this.
+
+Fine, until the object is destroyed before the queue gets round to the work. The reference is already gone, the block does nothing, and the cleanup is skipped. No error, no warning, and the shutdown method returned successfully.
+
+If what's being released is ordinary memory, none of this matters, which is exactly why the habit feels safe. Mine was a slice of the video hardware, shared with every app on the device.
+
+The honest part: I found it by reading, not by catching it happening. There was no log line either way, because you don't instrument a path you believe is running.
+
+So, a question rather than a rule. For every piece of cleanup you've handed off to run later: if it never runs, what doesn't get released? Memory, fine. A socket, a file handle, a lock, a piece of hardware — that needs to be guaranteed, not best-effort.
+
+Full write-up: https://mcmizzle.com/blog/weak-self-teardown-never-runs/]]></description>
+      <content:encoded><![CDATA[I spent an evening chasing a video bug, ran nine experiments against it, and refuted all nine. Then I read a piece of code none of them had touched and found a different bug: a cleanup routine that may never have been running.
+
+An object has to release something when it shuts down, and the release has to happen on a particular background queue. So the shutdown method hands the work to that queue. And because handing work to a queue can accidentally keep objects alive forever, there's a defensive move you learn early and then type without thinking: mark the reference weak — don't keep me alive for this.
+
+Fine, until the object is destroyed before the queue gets round to the work. The reference is already gone, the block does nothing, and the cleanup is skipped. No error, no warning, and the shutdown method returned successfully.
+
+If what's being released is ordinary memory, none of this matters, which is exactly why the habit feels safe. Mine was a slice of the video hardware, shared with every app on the device.
+
+The honest part: I found it by reading, not by catching it happening. There was no log line either way, because you don't instrument a path you believe is running.
+
+So, a question rather than a rule. For every piece of cleanup you've handed off to run later: if it never runs, what doesn't get released? Memory, fine. A socket, a file handle, a lock, a piece of hardware — that needs to be guaranteed, not best-effort.
+
+Full write-up: https://mcmizzle.com/blog/weak-self-teardown-never-runs/]]></content:encoded>
+    </item>
+    <item>
       <title><![CDATA[Watertight, on the bed, and the wrong shape]]></title>
       <link>https://mcmizzle.com/blog/watertight-mesh-wrong-shape/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/watertight-mesh-wrong-shape/</guid>
