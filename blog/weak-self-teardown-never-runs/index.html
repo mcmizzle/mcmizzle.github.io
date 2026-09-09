@@ -306,6 +306,54 @@ compositor: deinit found live VideoToolbox sessions -- stop() did not run
     not memory, <code>deinit</code> is the only place you can say it from and be
     certain.
   </p>
+
+  <h2>Update: the freeze was the audio session</h2>
+
+  <p>
+    I said the freeze was still open. It isn't any more, and it was not this.
+    It was an <em>audio</em> problem.
+  </p>
+
+  <p>
+    The app held an interrupting <code>.playback</code> session and played an
+    unmuted silent AAC track — the muxer puts one in every segment, and the
+    decoy player runs at <code>volume = 0</code> rather than muted because
+    AVKit's Picture in Picture eligibility check trips on <code>isMuted</code>
+    but not <code>volume</code>. Both exist purely to keep PiP working. Adding
+    <code>.mixWithOthers</code> to the session category fixed it: thirty-six
+    minutes clean after one source switch and four after a second, zero freezes,
+    against a previous distribution of a freeze within 45–100 seconds of every
+    switch without exception.
+  </p>
+
+  <p>
+    <strong>Which makes the point of this post sharper, not weaker.</strong>
+    Every one of those nine experiments replaced something on the
+    <em>video</em> side — the player item, the player, the layer, the local
+    server, the encoder, the bitrate, the number of decode sessions, the order
+    of teardown. Not one touched audio. I had thirteen hypotheses by the end and
+    they were all about video, because the symptom was a frozen video window.
+    The visible subsystem recruits every hypothesis you form.
+  </p>
+
+  <p>
+    The tell was there the whole time and I read it backwards: another app froze
+    too, and killing mine released it. <strong>A symptom that crosses into
+    another process is telling you what is <em>shared</em></strong> — and audio
+    was the one system-wide claim my app held. I took it as evidence of a
+    platform bug instead, twice, and got as far as drafting a Feedback report.
+  </p>
+
+  <p>
+    <strong>The teardown bug stands on its own, which is why it was worth
+    writing up separately.</strong> One honest correction: I later added a live
+    instance counter, and in every teardown I have since watched, the cleanup
+    won its race — the sessions were already released by the time
+    <code>deinit</code> ran. So it may never have leaked in production. That is
+    exactly the case I left room for above ("on every source switch, or once a
+    week, or never"), and I would still make the same fix: a cleanup that can
+    silently do nothing is worth closing whether or not you can prove it fired.
+  </p>
 </article>
 <nav class="post-nav"><a href="/blog/">← All posts</a></nav>
 </main>
