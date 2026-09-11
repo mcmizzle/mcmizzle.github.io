@@ -305,6 +305,33 @@ article.post img {
   border-radius: 12px;
 }
 
+/* Screenshots on the app pages. Phone captures are tall and narrow; letting
+   one fill the column makes it taller than the viewport, so portrait shots are
+   capped and centred while a landscape one may use the full width. */
+.screenshot {
+  margin: 2rem 0;
+}
+
+.screenshot img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(60, 40, 20, 0.15);
+}
+
+.screenshot.portrait img {
+  max-width: 320px;
+  margin-inline: auto;
+}
+
+.screenshot figcaption {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 0.6rem;
+  text-align: center;
+}
+
 /* Footer nav at the end of a post. */
 .post-nav {
   margin-top: 3rem;

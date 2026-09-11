@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Calorie Burndown — McMizzle</title>
-<meta name="description" content="Calorie Burndown is a calorie tracking app for iOS, iPadOS, and watchOS, built on HealthKit.">
+<meta name="description" content="Calorie Burndown reads what you eat and what you burn from Apple Health and answers the one question neither app does: given today, are you on pace for your goal?">
 <link rel="canonical" href="https://mcmizzle.com/calorieburndown/">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
@@ -14,7 +14,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://mcmizzle.com/calorieburndown/">
 <meta property="og:title" content="Calorie Burndown — McMizzle">
-<meta property="og:description" content="Calorie Burndown is a calorie tracking app for iOS, iPadOS, and watchOS, built on HealthKit.">
+<meta property="og:description" content="Calorie Burndown reads what you eat and what you burn from Apple Health and answers the one question neither app does: given today, are you on pace for your goal?">
 <meta property="og:image" content="https://mcmizzle.com/assets/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/assets/style.css">
@@ -24,20 +24,74 @@
 <main>
   <img class="app-icon" src="/assets/calorieburndown-icon.png" alt="Calorie Burndown app icon">
   <h1>Calorie Burndown</h1>
-  <p class="tagline">Track your calorie deficit, built on HealthKit.</p>
+  <p class="tagline">The number Health doesn't show.</p>
   <p><a class="app-store" href="https://apps.apple.com/app/id6800660426">Download on the App&nbsp;Store</a></p>
 
   <p>
-    Calorie Burndown tracks a daily calorie deficit (or surplus) goal
-    against what HealthKit already knows you've eaten and burned — no
-    duplicate manual logging, just your existing Health data turned into
-    one clear number: how much room you have left today.
+    You already log what you eat somewhere, and your Watch already counts
+    what you burn. Calorie Burndown reads both from Health and answers the
+    one question neither app does: given today, are you on pace for your
+    goal?
   </p>
 
   <p>
-    Works everywhere you do: an iPhone app with an iPad-optimized layout,
-    a home screen widget, a watchOS companion app with real-time numbers
-    even without your phone nearby, and watch face complications.
+    Every feature is free. No paywall, no subscription, no account.
+  </p>
+
+  <figure class="screenshot portrait">
+    <img src="/assets/shot-burndown-today.png" alt="The Today screen: a single large figure for how much room is left, above a burndown curve tracking against the goal line.">
+    <figcaption>Today — the figure, and the curve against your goal.</figcaption>
+  </figure>
+
+  <h2>It doesn't log anything</h2>
+  <p>
+    No food database, no barcode scanner, no "what did you have for lunch".
+    Keep using whatever app you already use. Burndown reads what lands in
+    Health and does the arithmetic against a goal and a date you set.
+  </p>
+
+  <figure class="screenshot portrait">
+    <img src="/assets/shot-burndown-history.png" alt="The History screen: seven days of bars showing daily deficit or surplus, with a weight trend line.">
+    <figcaption>History — seven days of deficit, and the weight trend behind it.</figcaption>
+  </figure>
+
+  <h2>On your wrist, without your phone</h2>
+  <p>
+    The watch app reads Health itself rather than waiting on a relay, so the
+    numbers are right on a run with your phone at home. There are watch face
+    complications too.
+  </p>
+
+  <h2>What you'll need</h2>
+  <p>
+    A calorie-tracking app that writes what you eat to Health, and an Apple
+    Watch recording what you burn. If you already have both, this turns them
+    into a number neither one gives you. If you don't, there's nothing here
+    for it to read.
+  </p>
+
+  <h2>Questions</h2>
+
+  <h3>Why do my iPhone and iPad show different numbers?</h3>
+  <p>
+    Health reaches an iPad through iCloud rather than directly, and can run an
+    hour or more behind. The app tells you when its data last arrived so you
+    can see that is what is happening. Opening Health on the iPad usually
+    prompts a sync.
+  </p>
+
+  <h3>Does the watch complication always stay current?</h3>
+  <p>
+    Usually, not always. watchOS decides when to refresh it, and after an app
+    update it can stop until you restart your Watch. When its numbers are old
+    it says so rather than showing a stale figure as if it were current.
+  </p>
+
+  <h3>Do I have to log food?</h3>
+  <p>
+    Yes — that half is manual, in whatever app you prefer. Burndown never
+    invents it: a day with nothing logged is shown as unlogged rather than as
+    a day you ate nothing.
   </p>
 
 </main>

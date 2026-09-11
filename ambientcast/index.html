@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AmbientCast — McMizzle</title>
-<meta name="description" content="AmbientCast is a tvOS app for watching your Bambu Lab 3D printer's live camera feed and print status on the Apple TV.">
+<meta name="description" content="A live camera feed and full print status for your Bambu Lab printer, on your Apple TV, iPhone, and iPad — no phone in the middle, no account, nothing through Bambu's servers.">
 <link rel="canonical" href="https://mcmizzle.com/ambientcast/">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
@@ -14,7 +14,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://mcmizzle.com/ambientcast/">
 <meta property="og:title" content="AmbientCast — McMizzle">
-<meta property="og:description" content="AmbientCast is a tvOS app for watching your Bambu Lab 3D printer's live camera feed and print status on the Apple TV.">
+<meta property="og:description" content="A live camera feed and full print status for your Bambu Lab printer, on your Apple TV, iPhone, and iPad — no phone in the middle, no account, nothing through Bambu's servers.">
 <meta property="og:image" content="https://mcmizzle.com/assets/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/assets/style.css">
@@ -24,21 +24,104 @@
 <main>
   <img class="app-icon" src="/assets/ambientcast-icon.png" alt="AmbientCast app icon">
   <h1>AmbientCast</h1>
-  <p class="tagline">Live view for your Bambu printer, right on the Apple TV.</p>
+  <p class="tagline">Your printer, on the big screen.</p>
   <p><a class="app-store" href="https://apps.apple.com/app/id6797067312">Download on the App&nbsp;Store</a></p>
 
   <p>
-    AmbientCast is a standalone tvOS app for watching your Bambu Lab
-    printer's live camera feed and print status — no phone, no Home
-    Assistant box, no other device in between. Add your printer's address and
-    access code once, with no Bambu account required, and the dashboard boots
-    straight up on every future launch.
+    A live camera feed and full print status on your Apple TV — no phone in
+    the middle, no Home Assistant box, no account. AmbientCast finds your
+    printer on your own network and talks to it directly.
   </p>
 
+  <h2>Setup is one number</h2>
   <p>
-    Optional Picture-in-Picture keeps the feed floating while you use the
-    rest of the Apple TV, and optional YouTube Live broadcasting relays the
-    same feed outside the house.
+    Your printer announces itself, so there is no address to look up. Enter
+    the access code from the printer's own screen, once, and the dashboard
+    opens straight to the feed on every launch after that.
+  </p>
+  <p>
+    You do not need to turn on the printer's LAN Only Mode. Bambu Handy keeps
+    working exactly as it does now.
+  </p>
+
+  <h2>Nothing goes through Bambu's servers</h2>
+  <p>
+    Status and video come straight from the printer to your device. There is
+    no sign-in, no password, and no Bambu Lab account — the app never contacts
+    their servers at all.
+  </p>
+  <p>
+    If you turn on YouTube Live, that feed goes to YouTube, because that is
+    what you asked it to do. The only other thing that leaves your device is a
+    short list of settings the app keeps in step across your own devices
+    through your iCloud account — no credentials among them, and the
+    <a href="/privacy/">privacy policy</a> names every item.
+  </p>
+
+  <h2>Keep watching while you do something else</h2>
+  <p>
+    Picture in Picture floats the feed in a corner while you use the rest of
+    the Apple TV. Optional YouTube Live broadcasting shares the same feed with
+    someone who isn't home, and can start and stop with each print
+    automatically.
+  </p>
+
+  <h2>Also on iPhone and iPad</h2>
+  <p>
+    The same dashboard, the same direct connection. Useful on the same network
+    as the printer.
+  </p>
+
+  <figure class="screenshot portrait">
+    <img src="/assets/shot-ambientcast-dashboard.png" alt="The AmbientCast dashboard on iPhone: the printer's live camera feed above print progress, temperatures, and the AMS filament row.">
+    <figcaption>The dashboard — live feed, progress, temperatures, and the AMS row.</figcaption>
+  </figure>
+
+  <figure class="screenshot">
+    <img src="/assets/shot-ambientcast-landscape.png" alt="AmbientCast on iPhone in landscape: the camera feed fills the screen with the status rail alongside it.">
+    <figcaption>Landscape puts the feed front and centre, with the status rail alongside.</figcaption>
+  </figure>
+
+  <h2>What you'll need</h2>
+  <p>
+    A Bambu Lab printer and an Apple TV on the same network, and the printer's
+    access code. Watching from outside the house needs a VPN back home — the
+    app talks to the printer directly and does not route through anyone's
+    cloud, which is the trade that makes everything above true.
+  </p>
+
+  <h2>Questions</h2>
+
+  <h3>Do I need a Bambu Lab account?</h3>
+  <p>
+    No. AmbientCast never contacts Bambu's servers. Earlier versions could
+    sign in; that was removed in 1.3.
+  </p>
+
+  <h3>Will this stop Bambu Handy working?</h3>
+  <p>
+    No. You do not need the printer's LAN Only Mode, and nothing AmbientCast
+    does changes how the printer talks to Bambu.
+  </p>
+
+  <h3>Can I watch from work?</h3>
+  <p>
+    Only over a VPN back to your home network. The app reaches the printer
+    directly, so if your device cannot reach the printer, it cannot show you
+    anything.
+  </p>
+
+  <h3>Where do I find the access code?</h3>
+  <p>
+    On the printer: Settings → LAN Only. The app shows you the exact screen
+    during setup.
+  </p>
+
+  <h3>Does it work on more than one printer?</h3>
+  <p>
+    Yes — add as many as you like and switch between them. Each device keeps
+    its own access codes; they are never sent anywhere, including to your
+    other devices.
   </p>
 
   <h2>Links</h2>
