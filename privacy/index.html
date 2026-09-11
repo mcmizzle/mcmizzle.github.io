@@ -23,17 +23,16 @@
 <header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
 <main>
   <h1>Privacy Policy</h1>
-  <p class="tagline">Last updated: September 5, 2026. Applies to every McMizzle app, including AmbientCast and Calorie Burndown.</p>
+  <p class="tagline">Last updated: September 11, 2026. Applies to every McMizzle app, including AmbientCast and Calorie Burndown.</p>
 
   <p>
     The short version: your data stays on your own devices and in your own
     Apple Account. None of it passes through any server McMizzle operates,
     because there isn't one — every McMizzle app talks directly to the
-    services you've chosen to connect it to (like Bambu Lab or YouTube), to
-    Apple's own on-device frameworks (like HealthKit), or to your own iCloud
-    account to keep an app's own settings and history — and, only if you turn
-    it on, a device credential — in step across your devices, and nowhere
-    else.
+    devices and services you've chosen to connect it to (your own printer on
+    your own network, or YouTube), to Apple's own on-device frameworks (like
+    HealthKit), or to your own iCloud account to keep an app's own settings
+    and history in step across your devices, and nowhere else.
   </p>
 
   <h2>What McMizzle apps store, and where</h2>
@@ -41,22 +40,21 @@
   <ul>
     <li>
       <strong>Account credentials and access tokens</strong> (e.g. AmbientCast's
-      Bambu Lab sign-in) are stored in your device's Keychain, on-device only.
+      YouTube sign-in) are stored in your device's Keychain, on-device only.
       Passwords are sent directly to the relevant third-party service to
-      authenticate — never stored by the app itself. Your Bambu password,
-      your Bambu access token and your Google/YouTube tokens never sync at
-      all: they stay on the device you signed in on.
+      authenticate — never stored by the app itself. Your Google/YouTube
+      tokens never sync at all: they stay on the device you signed in on.
     </li>
     <li>
       <strong>Printer access codes and camera passwords</strong> (AmbientCast)
-      are stored in your device's Keychain too, and they stay on that one
-      device unless you turn on <strong>"Sync Credentials"</strong>, which is
-      off until you are asked, and you are asked once — the first time there
-      is a credential to sync. If you turn it on, they travel through
-      <strong>iCloud Keychain</strong>, which is end-to-end encrypted: Apple
-      cannot read them, and neither can McMizzle. Turning it off again removes
-      them from iCloud. This is a separate channel from the ordinary iCloud
-      sync described below, which carries no credentials at all.
+      are stored in your device's Keychain too, and they <strong>stay on the
+      device you typed them into</strong>. There is no setting that shares
+      them. An earlier version of AmbientCast offered to sync them through
+      iCloud Keychain; that option has been removed, and the app moves any
+      credential it had put there back to the device — and out of iCloud — the
+      next time it launches. The practical consequence is that a printer's
+      access code has to be entered on each device you want to watch it
+      from.
     </li>
     <li>
       <strong>Health &amp; fitness data</strong> (e.g. Calorie Burndown's use of
@@ -96,9 +94,8 @@
           your devices watching the same print don't both record it. It
           identifies the device to your other devices, not you to anyone.
           <strong>No access code or password is included</strong> in any of
-          that — those stay in each device's Keychain, and reach another
-          device only through iCloud Keychain, and only if you turn on "Sync
-          Credentials" as described above.</li>
+          that — those stay in each device's Keychain and never leave the
+          device they were entered on.</li>
       </ul>
     </li>
   </ul>
@@ -116,8 +113,8 @@
   <h2>Third-party services</h2>
   <p>
     Where a McMizzle app connects to a service on your behalf (e.g.
-    AmbientCast to Bambu Lab's cloud or YouTube for optional live
-    streaming), what that service then does with your data on its own side
+    AmbientCast to YouTube for optional live streaming), what that service
+    then does with your data on its own side
     is governed by that service's own privacy policy, not this one. How the
     McMizzle app itself requests, uses, stores, and deletes that data is
     covered here — see
@@ -145,14 +142,13 @@
   </p>
   <ul>
     <li><strong>Account credentials and access tokens</strong> (AmbientCast's
-      Bambu Lab sign-in, YouTube OAuth tokens) are kept in your device's
+      YouTube OAuth tokens) are kept in your device's
       Keychain until you sign out of that service from the app's Settings,
       which deletes them immediately and on-device. For YouTube you can also
       revoke AmbientCast's access at
       <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.
       Deleting a printer or camera deletes its access code or password with
-      it; if you had turned on "Sync Credentials", turning it back off removes
-      those credentials from iCloud.</li>
+      it.</li>
     <li><strong>Health &amp; fitness data</strong> is read from Apple's
       HealthKit on demand and is not kept beyond what your widgets and watch
       complication need to show today's figures — those are held in an
@@ -169,17 +165,14 @@
       that device syncing. What is already in your Apple Account stays there,
       under Apple's control rather than McMizzle's: there is no McMizzle copy
       of it, and nothing to request from McMizzle, because it never reaches
-      us. The one thing you can withdraw from iCloud directly is credentials
-      synced by AmbientCast's "Sync Credentials": turning it back off removes
-      them.</li>
+      us.</li>
   </ul>
   <p>
     Deleting a McMizzle app removes everything on your device. Whatever an app
     synced through iCloud remains in your Apple Account, where McMizzle cannot
-    reach it — apart from credentials synced by "Sync Credentials", which
-    turning that setting off removes. Since no copy is ever sent to a McMizzle
-    server, there is nothing left behind for you to request the deletion of,
-    and no deletion request to make.
+    reach it. Since no copy is ever sent to a McMizzle server, there is
+    nothing left behind for you to request the deletion of, and no deletion
+    request to make.
   </p>
 
   <h2 id="ambientcast-google">Google user data (AmbientCast's optional YouTube Live feature)</h2>
