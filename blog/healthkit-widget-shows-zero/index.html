@@ -324,6 +324,20 @@ let query = HKStatisticsQuery(
   </p>
 
   <p>
+    One thing I've learned since publishing this: a locked device is not the
+    only way onto that failure path, and on a phone somebody is holding it isn't
+    the likeliest one. Permission that was never granted is invisible by design —
+    the page quoted above also says an app "isn't aware when the user denies
+    permission to read data," so those reads come back empty. Permission that was
+    granted and then revoked in the Health app does not behave that way: those
+    reads fail. I watched four of them fail on a single cold launch, with the app
+    never having recorded a successful read at all. The guards above cover that
+    case without being asked to, which is the first time I've seen them work
+    anywhere but a test — nothing published zeros, and the widget went on showing
+    the numbers from the last good read.
+  </p>
+
+  <p>
     I first ended this by saying that publishing nothing is nearly always better
     than publishing a zero. That's too broad, and at the time my own code broke
     it deliberately: the per-day helpers behind the thirty-day history chart
