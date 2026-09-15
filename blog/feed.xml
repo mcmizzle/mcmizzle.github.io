@@ -10,6 +10,13 @@
     <!-- ITEMS: newest first. Add each new post as the first <item>.
          pubDate must be RFC-822, e.g. Fri, 07 Aug 2026 12:00:00 +0000 -->
     <item>
+      <title>Picture in Picture kept freezing, and it was the audio session</title>
+      <link>https://mcmizzle.com/blog/pip-freezing-audio-session/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/pip-freezing-audio-session/</guid>
+      <pubDate>Tue, 15 Sep 2026 12:00:00 +0000</pubDate>
+      <description>Thirteen changes on the video side — the player, the layer, the server, the encode, the teardown — and none of them moved a PiP window that froze within a minute of every source switch. The app held a non-mixable AVAudioSession, and rebuilding the pipeline re-claimed it out from under whatever else was playing. Adding .mixWithOthers fixed it, and did not cost PiP on tvOS.</description>
+    </item>
+    <item>
       <title>Your teardown is queue.async { [weak self] }, so it might never run</title>
       <link>https://mcmizzle.com/blog/weak-self-teardown-never-runs/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/weak-self-teardown-never-runs/</guid>

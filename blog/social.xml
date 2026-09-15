@@ -7,6 +7,34 @@
     <language>en-us</language>
     <atom:link href="https://mcmizzle.com/blog/social.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title><![CDATA[Picture in Picture kept freezing, and it was the audio session]]></title>
+      <link>https://mcmizzle.com/blog/pip-freezing-audio-session/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/pip-freezing-audio-session/</guid>
+      <pubDate>Tue, 15 Sep 2026 12:00:00 +0000</pubDate>
+      <description><![CDATA[I spent weeks on a video window that kept freezing, replaced thirteen separate pieces of the video pipeline on real hardware, and fixed none of it. The cause was audio.
+
+The app shows a 3D printer's camera in a small floating window on an Apple TV, so you can watch a print while you watch something else. About a minute after switching which printer it was showing, that window would freeze — and so would whatever was playing behind it. Killing the app was the only thing that fixed either.
+
+Here is the part I had missed for weeks. On Apple's platforms a floating video window is not a video feature. It is bundled together with background audio, and to get one your app has to declare itself an audio app. Mine did, and by default an app that declares itself that way takes the speakers away from everything else. It made no difference that my video is silent — the system does not care whether anyone can hear it. Rebuilding the pipeline re-claimed the speakers in the middle of someone else's playback, and everything stopped.
+
+The fix was one option on one line. It sat there unmade because I was fairly sure it would cost me the floating window, and I could not find anywhere that said whether it does. So I built it and looked. On my device, it doesn't.
+
+The general version: when your bug reaches into another app, stop cataloguing what might be broken in yours and start listing what the two of you share.
+
+Full write-up, with the measurements and the one line: https://mcmizzle.com/blog/pip-freezing-audio-session/]]></description>
+      <content:encoded><![CDATA[I spent weeks on a video window that kept freezing, replaced thirteen separate pieces of the video pipeline on real hardware, and fixed none of it. The cause was audio.
+
+The app shows a 3D printer's camera in a small floating window on an Apple TV, so you can watch a print while you watch something else. About a minute after switching which printer it was showing, that window would freeze — and so would whatever was playing behind it. Killing the app was the only thing that fixed either.
+
+Here is the part I had missed for weeks. On Apple's platforms a floating video window is not a video feature. It is bundled together with background audio, and to get one your app has to declare itself an audio app. Mine did, and by default an app that declares itself that way takes the speakers away from everything else. It made no difference that my video is silent — the system does not care whether anyone can hear it. Rebuilding the pipeline re-claimed the speakers in the middle of someone else's playback, and everything stopped.
+
+The fix was one option on one line. It sat there unmade because I was fairly sure it would cost me the floating window, and I could not find anywhere that said whether it does. So I built it and looked. On my device, it doesn't.
+
+The general version: when your bug reaches into another app, stop cataloguing what might be broken in yours and start listing what the two of you share.
+
+Full write-up, with the measurements and the one line: https://mcmizzle.com/blog/pip-freezing-audio-session/]]></content:encoded>
+    </item>
+    <item>
       <title><![CDATA[Your teardown is queue.async { [weak self] }, so it might never run]]></title>
       <link>https://mcmizzle.com/blog/weak-self-teardown-never-runs/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/weak-self-teardown-never-runs/</guid>

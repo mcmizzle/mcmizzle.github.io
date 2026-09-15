@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Picture in Picture kept freezing, and it was the audio session — McMizzle</title>
+<meta name="description" content="Thirteen fixes on the video side changed nothing. The PiP window froze because my app held a non-mixable AVAudioSession, and .mixWithOthers did not cost PiP on tvOS.">
+<link rel="canonical" href="https://mcmizzle.com/blog/pip-freezing-audio-session/">
+<link rel="alternate" type="application/rss+xml" title="McMizzle Blog" href="https://mcmizzle.com/blog/feed.xml">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf6ec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201a13">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://mcmizzle.com/blog/pip-freezing-audio-session/">
+<meta property="og:title" content="Picture in Picture kept freezing, and it was the audio session — McMizzle">
+<meta property="og:description" content="Thirteen fixes on the video side changed nothing. The PiP window froze because my app held a non-mixable AVAudioSession, and .mixWithOthers did not cost PiP on tvOS.">
+<meta property="og:image" content="https://mcmizzle.com/assets/og-pip-freezing-audio-session.png">
+<meta property="article:published_time" content="2026-09-15">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
+<main>
+<article class="post">
+  <h1>Picture in Picture kept freezing, and it was the audio session</h1>
+  <p class="post-meta">Kevin McMahon · September 15, 2026</p>
+
+  <p>
+    I have a tvOS app, <a href="/ambientcast/">AmbientCast</a>, that puts a 3D
+    printer's camera feed into a Picture in Picture window so you can keep an
+    eye on a print in the corner of the screen while something else plays. For
+    weeks that window kept freezing — the picture stopped, the app behind it
+    was fine, and whatever was playing in the foreground stalled alongside it.
+    Killing my app was the only thing that fixed either, at the time.
+  </p>
+
+  <p>
+    The symptom was entirely in video. The cause was the audio session.
+  </p>
+
+  <h2>Everything I replaced, and what it changed</h2>
+
+  <p>
+    The PiP window is fed by a local pipeline: the camera feed is decoded, a
+    status overlay is composited onto it, the result is re-encoded and served
+    as HLS from a small server inside the app, and a player reads that back to
+    give the system something to put in the window. That is a lot of parts, and
+    over several evenings on a physical Apple TV 4K (3rd generation) on tvOS 27
+    I replaced most of them. Each of these was a real change, installed and
+    measured on hardware, and none of them moved the freeze:
+  </p>
+
+  <ul>
+    <li>the <code>AVPlayerItem</code>, replaced 42 times</li>
+    <li>the playhead, seeked forward past the stall</li>
+    <li>the <code>AVPlayer</code> itself, rebuilt</li>
+    <li>the <code>AVPlayerLayer</code>, rebuilt</li>
+    <li>the local HLS server, restarted</li>
+    <li>the address that server binds to</li>
+    <li>the TCP connections between that server and the player</li>
+    <li>the encode resolution, cut to a fraction of normal</li>
+    <li>the number of hardware decode sessions, reduced by one</li>
+    <li>hardware video sessions leaked at teardown, which turned out to be a
+      <a href="/blog/weak-self-teardown-never-runs/">real bug</a> and not this one</li>
+    <li>the pipeline teardown path</li>
+    <li>a mid-stream format change</li>
+    <li>the Picture in Picture restore handshake</li>
+  </ul>
+
+  <p>
+    Thirteen things. Every one of them on the video side. That is not an
+    accident of what I happened to try — the symptom was a frozen video window,
+    so every hypothesis I formed was about video, and I went on forming them
+    for weeks.
+  </p>
+
+  <h2>The trigger was a transition, not a state</h2>
+
+  <p>
+    The first thing that actually moved was noticing that the freeze only ever
+    followed a source switch — changing which printer the dashboard is showing.
+    Every experiment above had tested the pipeline in steady state, and steady
+    state was fine. Once I tested across the switch instead, it reproduced on
+    demand:
+  </p>
+
+  <pre><code>PiP up, no switch        9.5 minutes, zero freezes
+after a source switch    froze at 46s
+after a source switch    froze at 68s
+after a source switch    froze at 43s
+</code></pre>
+
+  <p>
+    One thing there cost me several trials before I caught it: the degraded
+    state survives killing the app. The first launch after a reboot ran clean,
+    and every launch after a source switch froze in about the same 45 seconds
+    regardless of which process it was. So any trial run after a reproduction
+    is measuring a poisoned machine, not your change. Reboot between trials.
+    And note that <code>devicectl device process launch
+    --terminate-existing</code> is a SIGKILL that runs no cleanup at all, which
+    means it bypasses the very teardown path I was trying to test.
+  </p>
+
+  <h2>Why a silent video app holds an audio session at all</h2>
+
+  <p>
+    Picture in Picture is not a video feature as far as the system is
+    concerned. It is part of the same capability as background audio and
+    AirPlay: to get it you declare the <code>audio</code> background mode and
+    configure a <code>.playback</code> audio session, which is the setup
+    Apple's
+    <a href="https://developer.apple.com/documentation/avfoundation/configuring-your-app-for-media-playback">Configuring
+    your app for media playback</a> describes.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what's an audio session?</summary>
+    <p>
+      A device has one set of speakers and many apps that might want them. An
+      audio session is your app's declaration of how it intends to use audio —
+      whether it should keep playing when the screen locks, and crucially
+      whether it plays alongside other apps or takes over from them. The system
+      arbitrates between everyone's declarations.
+    </p>
+  </details>
+
+  <details class="eli5">
+    <summary>ELI5: what's a background mode?</summary>
+    <p>
+      iOS and tvOS normally freeze an app the moment it leaves the screen. A
+      background mode is a permission you declare in the app's configuration
+      saying you need to keep doing a specific kind of work anyway. They are
+      narrow, App Review looks at them, and "audio" is the one that covers
+      Picture in Picture.
+    </p>
+  </details>
+
+  <p>
+    Three things in my app existed for no reason other than keeping PiP alive:
+  </p>
+
+  <ul>
+    <li>the <code>.playback</code> category, set once at launch;</li>
+    <li>a silent AAC track written into every HLS segment, because a
+      video-only stream left <code>AVPlayerItem</code> stalled on status and
+      tracks, so there was never a playable item to hang a window on;</li>
+    <li>the player running at <code>volume = 0</code> rather than
+      <code>isMuted = true</code> — I'd found earlier that muting it cost me
+      PiP eligibility and setting the volume to zero did not, and both are
+      equally silent.</li>
+  </ul>
+
+  <details class="eli5">
+    <summary>ELI5: why would a silent app ship an audio track?</summary>
+    <p>
+      The video here is generated on the fly and has no sound. But the parts of
+      the system that hand out Picture in Picture windows expect a normal piece
+      of media, and a normal piece of media has an audio track — without one
+      the player never finished loading the stream, so there was nothing to put
+      in a window. So the stream carries one containing silence — real audio
+      data that happens to be inaudible.
+    </p>
+  </details>
+
+  <p>
+    Put together: as far as the rest of the system was concerned, my app was an
+    app playing audio, through a session that interrupts everyone else's. And a
+    source switch tears that whole stack down and builds a new one, which
+    re-claims the session in the middle of whatever else is playing.
+  </p>
+
+  <h2>The one-line change I had spent weeks not making</h2>
+
+  <pre><code>// before
+try AVAudioSession.sharedInstance()
+    .setCategory(.playback, mode: .moviePlayback)
+
+// after
+try AVAudioSession.sharedInstance()
+    .setCategory(.playback, mode: .moviePlayback, options: [.mixWithOthers])
+</code></pre>
+
+  <p>
+    The reason it took weeks is the reason it is worth writing down. Every one
+    of those three deliberate decisions exists to keep Picture in Picture
+    working, and PiP is the feature this app exists for.
+    <code>.mixWithOthers</code> looked exactly like the sort of change that
+    would quietly persuade the system I wasn't really playing audio and stop
+    handing me a window — and losing PiP to fix an interruption would have been
+    the worst available trade. I could not find that question answered
+    anywhere: not in the AVFoundation documentation, not in the forums, not in
+    anyone's write-up.
+  </p>
+
+  <p>
+    So I built the variant and looked at it. With the mixable session, on the
+    same hardware:
+  </p>
+
+  <pre><code>audio: session category .playback + .mixWithOthers
+pip:   didStartPictureInPicture
+pip:   didStartPictureInPicture
+hls:   61 segments, served 101 requests
+</code></pre>
+
+  <p>
+    PiP started on demand, twice, with the pipeline running at its normal rate.
+    That is one app on one device, and the device is an Apple TV — the
+    <code>setCategory</code> call is shared with my iOS target, but I have not
+    re-measured PiP on an iPhone since the change. It is not a guarantee from
+    Apple either — but it is one more data point than I could find anywhere, so
+    I will state it plainly: <strong>adding <code>.mixWithOthers</code> did not
+    cost me Picture in Picture on tvOS.</strong>
+  </p>
+
+  <h2>What it fixed</h2>
+
+  <p>
+    Before the change, the window froze within about a minute of every source
+    switch, without exception. After it, on the same Apple TV with PiP up and a
+    video app playing alongside: 36 minutes clean after one source switch and 4
+    more after a second, zero freezes, and the local server serving its usual 101 to
+    103 requests a minute throughout. The app playing in the foreground dropped
+    0 of 13,148 frames.
+  </p>
+
+  <h2>The documentation said so the whole time</h2>
+
+  <p>
+    From Apple's page on the
+    <a href="https://developer.apple.com/documentation/avfaudio/avaudiosession/category-swift.struct/playback"><code>.playback</code>
+    category</a>:
+  </p>
+
+  <blockquote>
+    <p>
+      By default, using this category implies that your app&rsquo;s audio is
+      nonmixable&mdash;activating your session will interrupt any other audio
+      sessions which are also nonmixable.
+    </p>
+  </blockquote>
+
+  <p>
+    That sentence has been there the whole time, and I had read the page. What
+    I never did was connect it to a video app, because my app makes no sound
+    that anyone can hear. The track in those segments is silence. The system
+    does not care whether anyone can hear it.
+  </p>
+
+  <h2>What I'd tell you to check first</h2>
+
+  <p>
+    <strong>If your symptom crosses into another process, it is a message about
+    something shared.</strong> Another app stalling, or recovering when you
+    kill yours, is not a report about your video objects — none of mine ever
+    helped. Audio is usually the only system-wide claim a media app holds, and
+    it was the last thing I looked at rather than the first.
+  </p>
+
+  <p>
+    <strong>The visible subsystem recruits every hypothesis.</strong> A frozen
+    video window generated thirteen experiments about video. Ask early what
+    else the feature depends on, and if the answer includes a capability you
+    declare in <code>UIBackgroundModes</code>, start there.
+  </p>
+
+  <p>
+    <strong>Read back what the session actually is, at the moment of the
+    symptom.</strong> Not what you set at launch — plenty of things reset the
+    category behind you, including AVKit, capture sessions and third-party
+    SDKs, and the last writer wins:
+  </p>
+
+  <pre><code>let session = AVAudioSession.sharedInstance()
+print("audio: \(session.category.rawValue) opts \(session.categoryOptions.rawValue)")
+</code></pre>
+
+  <p>
+    <strong>And test the transition, not the steady state.</strong> A pipeline
+    that is healthy while it runs tells you nothing about what happens when it
+    is torn down and rebuilt. Mine was healthy for 9.5 minutes at a stretch and
+    broken 46 seconds after I touched it.
+  </p>
+</article>
+<nav class="post-nav"><a href="/blog/">← All posts</a></nav>
+</main>
+<footer>
+  <nav class="footer-links">
+    <a href="/about/">About</a> &middot;
+    <a href="/blog/">Blog</a> &middot;
+    <a href="/printing/">3D printing</a> &middot;
+    <a href="/support/">Support</a> &middot;
+    <a href="/privacy/">Privacy</a> &middot;
+    <a href="/blog/feed.xml">RSS</a> &middot;
+    <a href="https://www.linkedin.com/in/mcmizzle">LinkedIn</a>
+  </nav>
+  <p class="footer-legal">&copy; 2026 Kevin McMahon (McMizzle)</p>
+</footer>
+</body>
+</html>
