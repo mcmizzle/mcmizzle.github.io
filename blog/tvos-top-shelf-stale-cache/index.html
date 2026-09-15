@@ -63,6 +63,15 @@
     which is exactly why it costs so much time.
   </p>
 
+  <p>
+    <strong>Update, September 2026 — on the tvOS 27 release build, a reinstall
+    is enough.</strong> I re-ran this on the shipping OS and could not reproduce
+    the expensive half: a cached placeholder was replaced by correct artwork on
+    the next install, with no reboot. The reboot below is what worked at the
+    time and on the build named below; try reinstalling first.
+    <a href="#update-tvos27">The re-check is at the end of this post.</a>
+  </p>
+
   <h2>What I ruled out first, and why it wasn't enough</h2>
 
   <p>
@@ -339,6 +348,66 @@ let item = TVTopShelfSectionedItem(identifier: "current-item-\(identity)")
     fallback that returns yesterday's correct value is annoying. A null gets
     cached somewhere you can't see, and then you're debugging your own debugging.
   </p>
+
+  <h2 id="update-tvos27">Update: re-checked on the tvOS 27 release build</h2>
+
+  <p>
+    The observation above was made on the tvOS 27.0 <em>public beta</em>, build
+    24J5325d. tvOS 27 shipped on 14 September 2026, and I re-ran the experiment
+    on the same physical Apple TV 4K (3rd generation), now on <strong>tvOS 27.0
+    build 24J361</strong>. <strong>The behaviour that cost the evening does not
+    reproduce.</strong>
+  </p>
+
+  <p>
+    To test it properly I had to defeat my own fix. The app now derives the
+    item's identifier from its contents, including the image path — and that
+    path contains the app's bundle UUID, which changes on every install, so
+    every reinstall produces a fresh identifier and would hide the thing I was
+    trying to measure. So the probe build used a <em>constant</em> identifier
+    and a constant title, and set no progress value, leaving the image bytes as
+    the only variable.
+  </p>
+
+  <ul>
+    <li>
+      <strong>Prime the cache with a bad item.</strong> A build handing the
+      system <code>nil</code> for both image URLs — exactly what the original
+      bad build did — rendered the same dark placeholder. Symptom reproduced.
+    </li>
+    <li>
+      <strong>Then fix it, and don't reboot.</strong> A build with valid images
+      and the same constant identifier, installed over the top: the artwork was
+      back on the Home screen about two minutes later. No reboot.
+    </li>
+    <li>
+      <strong>Control.</strong> An earlier pair of builds swapped the real
+      artwork for a solid red image under that same constant identifier. That
+      updated immediately too, so this is not a special case of recovering from
+      a null.
+    </li>
+  </ul>
+
+  <p>
+    <strong>What this does and does not show.</strong> A reinstall necessarily
+    moves the extension's bundle, so the image URLs differ between two builds
+    even when the identifier does not. That was equally true during the original
+    investigation, where the placeholder survived reinstall after reinstall
+    anyway — so the conditions match the original report as closely as a rebuild
+    allows. What I can say is that <em>a reinstall now evicts the stale tile</em>,
+    which is the part that was costing hours. I did not test whether a tile
+    self-corrects with no reinstall at all.
+  </p>
+
+  <p>
+    Two things from the original post survive unchanged. Don't let a broken
+    build ship a null — that advice was never about the cache, it was about not
+    handing a renderer something you can't see the consequences of. And deriving
+    the identifier from the content is a few lines that make the question moot
+    on any OS version, which is worth keeping whatever the platform does this
+    year.
+  </p>
+
 </article>
 <nav class="post-nav"><a href="/blog/">← All posts</a></nav>
 </main>
