@@ -77,7 +77,7 @@
 
   <blockquote>
     <p>
-      The user's device stores all HealthKit data locally. For security, the
+      The user’s device stores all HealthKit data locally. For security, the
       device encrypts the HealthKit store when the user locks the device. As a
       result, your app may not be able to read data from the store when it runs
       in the background. However, your app can still write to the store, even
@@ -195,7 +195,7 @@ let query = HKStatisticsQuery(
   <p>
     Apple does define a specific code for this case —
     <a href="https://developer.apple.com/documentation/healthkit/hkerror/code/errordatabaseinaccessible"><code>HKError.Code.errorDatabaseInaccessible</code></a>,
-    documented as "The HealthKit data is unavailable because it's protected and
+    documented as "The HealthKit data is unavailable because it’s protected and
     the device is locked" — and you could match on it directly. I deliberately
     didn't. I treat
     <a href="https://developer.apple.com/documentation/healthkit/hkerror/code/errornodata"><code>errorNoData</code></a>
@@ -327,7 +327,7 @@ let query = HKStatisticsQuery(
     One thing I've learned since publishing this: a locked device is not the
     only way onto that failure path, and on a phone somebody is holding it isn't
     the likeliest one. Permission that was never granted is invisible by design —
-    the page quoted above also says an app "isn't aware when the user denies
+    the page quoted above also says an app "isn’t aware when the user denies
     permission to read data," so those reads come back empty. Permission that was
     granted and then revoked in the Health app does not behave that way: those
     reads fail. I watched four of them fail on a single cold launch, with the app
