@@ -10,13 +10,6 @@
     <!-- ITEMS: newest first. Add each new post as the first <item>.
          pubDate must be RFC-822, e.g. Fri, 07 Aug 2026 12:00:00 +0000 -->
     <item>
-      <title>I fixed the inset in one caller, and the other one printed the bug</title>
-      <link>https://mcmizzle.com/blog/inset-fix-one-caller/</link>
-      <guid isPermaLink="true">https://mcmizzle.com/blog/inset-fix-one-caller/</guid>
-      <pubDate>Tue, 15 Sep 2026 12:00:00 +0000</pubDate>
-      <description>A polygon inset that ran away at sharp corners, replaced two weeks earlier and written up — then printed again from a second caller that was never migrated. Plus half a day widening a border against wedges that were identical at every width, because one symptom had two unrelated causes.</description>
-    </item>
-    <item>
       <title>Picture in Picture kept freezing, and it was the audio session</title>
       <link>https://mcmizzle.com/blog/pip-freezing-audio-session/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/pip-freezing-audio-session/</guid>

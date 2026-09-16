@@ -7,38 +7,6 @@
     <language>en-us</language>
     <atom:link href="https://mcmizzle.com/blog/social.xml" rel="self" type="application/rss+xml"/>
     <item>
-      <title><![CDATA[I fixed the inset in one caller, and the other one printed the bug]]></title>
-      <link>https://mcmizzle.com/blog/inset-fix-one-caller/</link>
-      <guid isPermaLink="true">https://mcmizzle.com/blog/inset-fix-one-caller/</guid>
-      <pubDate>Tue, 15 Sep 2026 12:00:00 +0000</pubDate>
-      <description><![CDATA[I found a bug in my own geometry code two weeks ago, understood it, replaced the function that caused it, and wrote the whole thing up. Then it printed again.
-
-The code insets a shape — draws a line a fixed distance inside an outline. The obvious implementation moves each corner inward, and at a sharp inward-pointing notch the corner has to travel so far that it shoots across the shape instead. I replaced it with something that cannot fail that way, and I migrated the caller I had been staring at. There was a second caller two lines below it. I never looked.
-
-What it cost was not the reprint. A border was supposed to cover that seam, and where the inset had run away, it didn't — so the part came out with black wedges in every notch. I read that as the border being too narrow and spent half a day widening it: 1.2 mm, then 1.4, then 1.6.
-
-Rendered at all three, the wedges are identical. Not smaller. Identical.
-
-That is a much more useful result than it looks, and I misread it three times. A fix that helps a little means keep going. A fix that changes nothing at all means the thing you are changing is not in the path that produces the symptom. There were two faults with the same symptom: one uniform, which the wider border genuinely did fix, and one ragged, which no uniform width can chase.
-
-What ended it was drawing it. One render of the border laid over the real pattern, from models I already had, reproduced the wedges exactly and showed the width changing nothing. A few minutes against most of a day of arithmetic — on which I had already got the sign backwards twice.
-
-Full write-up: https://mcmizzle.com/blog/inset-fix-one-caller/]]></description>
-      <content:encoded><![CDATA[I found a bug in my own geometry code two weeks ago, understood it, replaced the function that caused it, and wrote the whole thing up. Then it printed again.
-
-The code insets a shape — draws a line a fixed distance inside an outline. The obvious implementation moves each corner inward, and at a sharp inward-pointing notch the corner has to travel so far that it shoots across the shape instead. I replaced it with something that cannot fail that way, and I migrated the caller I had been staring at. There was a second caller two lines below it. I never looked.
-
-What it cost was not the reprint. A border was supposed to cover that seam, and where the inset had run away, it didn't — so the part came out with black wedges in every notch. I read that as the border being too narrow and spent half a day widening it: 1.2 mm, then 1.4, then 1.6.
-
-Rendered at all three, the wedges are identical. Not smaller. Identical.
-
-That is a much more useful result than it looks, and I misread it three times. A fix that helps a little means keep going. A fix that changes nothing at all means the thing you are changing is not in the path that produces the symptom. There were two faults with the same symptom: one uniform, which the wider border genuinely did fix, and one ragged, which no uniform width can chase.
-
-What ended it was drawing it. One render of the border laid over the real pattern, from models I already had, reproduced the wedges exactly and showed the width changing nothing. A few minutes against most of a day of arithmetic — on which I had already got the sign backwards twice.
-
-Full write-up: https://mcmizzle.com/blog/inset-fix-one-caller/]]></content:encoded>
-    </item>
-    <item>
       <title><![CDATA[Picture in Picture kept freezing, and it was the audio session]]></title>
       <link>https://mcmizzle.com/blog/pip-freezing-audio-session/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/pip-freezing-audio-session/</guid>
