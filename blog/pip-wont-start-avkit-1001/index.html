@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>isPictureInPicturePossible was true and PiP still wouldn't start — McMizzle</title>
+<meta name="description" content="startPictureInPicture() did nothing and AVKitErrorDomain -1001 landed in a delegate I never implemented: AVKit won't start PiP for an off-screen layer.">
+<link rel="canonical" href="https://mcmizzle.com/blog/pip-wont-start-avkit-1001/">
+<link rel="alternate" type="application/rss+xml" title="McMizzle Blog" href="https://mcmizzle.com/blog/feed.xml">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf6ec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201a13">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://mcmizzle.com/blog/pip-wont-start-avkit-1001/">
+<meta property="og:title" content="isPictureInPicturePossible was true and PiP still wouldn't start — McMizzle">
+<meta property="og:description" content="startPictureInPicture() did nothing and AVKitErrorDomain -1001 landed in a delegate I never implemented: AVKit won't start PiP for an off-screen layer.">
+<meta property="og:image" content="https://mcmizzle.com/assets/og-pip-wont-start-avkit-1001.png">
+<meta property="article:published_time" content="2026-09-22">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
+<main>
+<article class="post">
+  <h1>isPictureInPicturePossible was true and PiP still wouldn't start</h1>
+  <p class="post-meta">Kevin McMahon · September 22, 2026</p>
+
+  <p>
+    I tapped a row in my app, it called
+    <code>startPictureInPicture()</code>, and nothing happened. No window, no
+    error, no callback I was watching. Four seconds later a fallback kicked in
+    and offered to stop the recording — which is precisely the outcome the
+    button exists to avoid. Every time I checked,
+    <code>isPictureInPicturePossible</code> was <code>true</code>.
+  </p>
+
+  <p>
+    The app is <a href="/ambientcast/">AmbientCast</a>, which puts a 3D
+    printer's camera feed into a Picture in Picture window so you can watch a
+    print while you do something else. On iPhone the timelapse library is a
+    different tab from the video. That turns out to be the whole story, and it
+    took mirroring an error I had never read to find it.
+  </p>
+
+  <h2>The error exists, in one place, and I wasn't looking at it</h2>
+
+  <p>
+    <code>startPictureInPicture()</code> returns <code>Void</code>. It is
+    documented as <em>"Starts Picture in Picture, if possible."</em>, and when
+    it isn't possible the only thing that tells you so is
+    <a href="https://developer.apple.com/documentation/avkit/avpictureinpicturecontrollerdelegate/pictureinpicturecontroller(_:failedtostartpictureinpicturewitherror:)"><code>pictureInPictureController(_:failedToStartPictureInPictureWithError:)</code></a>
+    on the delegate. I had implemented the start and stop callbacks, because
+    those drive the button's state, and not that one — there was nothing to
+    drive with it.
+  </p>
+
+  <p>
+    So I implemented it, and got this on a physical iPhone 17, on the first
+    tap after installing:
+  </p>
+
+  <pre><code>pip: calling startPictureInPicture() (active=false)
+pip: FAILED to start -- AVKitErrorDomain -1001: Failed to start picture in picture.
+</code></pre>
+
+  <p>
+    There is a second reason this had never been read. The delegate logged
+    only to <code>os_log</code>, and getting at that on a physical device
+    means the device attached and something watching at the moment the bug
+    happens — which is not the situation you are in when the bug is a tap on a
+    phone you are holding, next to a printer, mid-print. Mirroring the same
+    line into a plain text file inside the app's container answered a question
+    that had survived several rounds of reasoning from "the flag is true and
+    nothing happened."
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: why not just read the log?</summary>
+    <p>
+      Apple's logging system keeps messages in a structured store on the
+      device rather than printing them to a stream you can leave running. To
+      see them from a real device you generally attach it and watch, live. A
+      file the app writes itself has none of that ceremony: it accumulates
+      whether or not anyone is looking, and you copy it off afterwards.
+    </p>
+  </details>
+
+  <h2>What -1001 usually means, and why that answer was wrong here</h2>
+
+  <p>
+    Search that error and you land on the scene activation state. The
+    canonical
+    <a href="https://developer.apple.com/forums/thread/697441">Apple
+    Developer Forums thread</a> on it, open since December 2021, carries the
+    full error with its failure reason attached: <em>"The UIScene for the
+    content source has an activation state other than
+    UISceneActivationStateForegroundActive, which is not allowed."</em> That
+    is a real cause and it is the one every result describes. It was not mine.
+    My app was in the foreground, being tapped by a person.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what's a scene activation state?</summary>
+    <p>
+      A scene is one window's worth of your app — on a phone usually the only
+      one, on an iPad or a Mac possibly several. The system tells each scene
+      whether it is frontmost and being used, merely visible, or in the
+      background. Plenty of APIs refuse to do anything for a scene that is not
+      frontmost, on the reasonable grounds that the user isn't looking at it.
+    </p>
+  </details>
+
+  <p>
+    The thread has never been answered, and the last reply on it, from July
+    2023, is someone saying their activation state logs as
+    <code>ForegroundActive</code> and Picture in Picture still won't start. I
+    think there is a second cause wearing the same error code, and it is this:
+    <strong>AVKit will not start Picture in Picture for a player layer that is
+    not on screen.</strong> Not "belongs to a backgrounded app" — not on
+    screen. A layer sitting in a tab you are not currently looking at
+    qualifies, and so does one that has just been created and never displayed.
+  </p>
+
+  <p>
+    I have seen it twice in this app from the two different directions. Once
+    from the tab, above. Once from a rebuild: a recovery path used to throw
+    away the <code>AVPlayerLayer</code> and its controller and construct fresh
+    ones while the app was backgrounded, and the new controller answered
+    <code>-1001</code> every time it fired. That second one is also consistent
+    with the documented scene explanation, so I am not claiming it as
+    independent evidence. The tab case is the one that rules the scene out:
+    the app was foreground throughout, nothing about the scene changed, and
+    bringing the layer on screen is what changed the outcome.
+  </p>
+
+  <p>
+    One honest gap: my breadcrumb captured the domain, the code and
+    <code>localizedDescription</code>, and not
+    <code>localizedFailureReason</code>. So I cannot tell you whether AVKit
+    attached a different reason to my failure or none at all. Log it — it is
+    one more string and it is the field that carries the actual diagnosis:
+  </p>
+
+  <pre><code>func pictureInPictureController(_ controller: AVPictureInPictureController,
+                                failedToStartPictureInPictureWithError error: Error) {
+    let ns = error as NSError
+    log("pip failed: \(ns.domain) \(ns.code): \(ns.localizedDescription) "
+        + "reason: \(ns.localizedFailureReason ?? "none")")
+}
+</code></pre>
+
+  <h2>The fix is to put the layer on screen, then ask repeatedly</h2>
+
+  <p>
+    Select the tab holding the video first, then start. The part worth copying
+    is the second half: "is it laid out yet" is not knowable in advance, so
+    this asks on a short ladder rather than sleeping for a number somebody
+    guessed.
+  </p>
+
+  <pre><code>@MainActor
+func startPiPForWatching() {
+    selectedTab = .video                       // put the layer on screen first
+    Task {
+        for delay in [350, 600, 900, 1200] {   // milliseconds
+            try? await Task.sleep(for: .milliseconds(delay))
+            if pipController.isPictureInPictureActive { return }
+            pipController.startPictureInPicture()
+        }
+    }
+}
+</code></pre>
+
+  <p>
+    <code>isPictureInPictureActive</code> only flips once the window is
+    actually up, so a later rung can fire while an earlier start is still in
+    flight. In practice that has been harmless; if it bothers you, set a flag
+    from <code>pictureInPictureControllerWillStartPictureInPicture(_:)</code>
+    and check that too.
+  </p>
+
+  <h2>Two more things the same log exposed</h2>
+
+  <p>
+    <strong>My give-up timer was cutting off successes.</strong> The fallback
+    warning had a four-second budget, and the log showed a start landing in
+    the same second as the timeout that had given up on it — so a user got
+    told Picture in Picture had failed, and then a Picture in Picture window
+    appeared. A guessed timeout around an asynchronous system call wants a
+    measured margin, not a round number. Mine is six seconds now, and the
+    number came from the log rather than from taste.
+  </p>
+
+  <p>
+    <strong>Tapping again made it worse.</strong> Each tap cancelled the
+    pending fallback and started a new one, so across roughly ten taps a
+    second or two apart, the fallback completed exactly once. The obvious
+    human response to a dead-looking control — press it again — was deferring
+    the only feedback that was coming.
+  </p>
+
+  <h2>The flag is late as well as incomplete</h2>
+
+  <p>
+    <code>isPictureInPicturePossible</code> is documented as <em>"A Boolean
+    value that indicates whether Picture in Picture playback is currently
+    possible."</em>, and its discussion names exactly one reason it can be
+    false: another app is already presenting Picture in Picture. Nothing about
+    layout. In my app it was true whenever the controller was attached to a
+    layer and the player was playing, which is a fact about configuration
+    rather than about readiness.
+  </p>
+
+  <p>
+    It is also slow to become true, because whatever feeds your player has to
+    get going first. I have anecdotes rather than a distribution: about ten to
+    fifteen seconds by eye on an Apple TV, and one logged transition from
+    false to true inside sixteen seconds on an iPhone. That is thin enough
+    that the app now logs a duration on every transition, which is the honest
+    response to having argued about a number nobody had measured.
+  </p>
+
+  <p>
+    The consequence is a product one. If you hide a control until
+    <code>isPictureInPicturePossible</code> is true, "not yet" and "never"
+    look identical to the user, and the user gives up during the gap. On tvOS
+    it is worse than that: a <code>.disabled</code> button cannot take focus,
+    so the greyed-out version is unreachable by the remote and still reads as
+    absent.
+  </p>
+
+  <h2>What I'd tell you to check first</h2>
+
+  <p>
+    If you are getting <code>AVKitErrorDomain -1001</code> and your scene
+    really is <code>ForegroundActive</code>: find out whether the layer your
+    controller was built with is on screen at the moment you call
+    <code>startPictureInPicture()</code>. A tab bar is the case I hit, and a
+    layer built fresh while backgrounded is the other one I have watched fail.
+    A navigation push or a full-screen sheet over the video are the same shape
+    and worth ruling out, though I have not tested either. None of them will
+    move the flag.
+  </p>
+
+  <p>
+    And the general one, which is not about AVKit. A capability flag that
+    reports <em>configuration</em> will happily authorise an action that is
+    impossible right now, so before you gate a user-facing offer on one, work
+    out what the flag is actually observing. Mine was observing that I had
+    wired the controller up correctly. I had.
+  </p>
+</article>
+<nav class="post-nav"><a href="/blog/">← All posts</a></nav>
+</main>
+<footer>
+  <nav class="footer-links">
+    <a href="/about/">About</a> &middot;
+    <a href="/blog/">Blog</a> &middot;
+    <a href="/printing/">3D printing</a> &middot;
+    <a href="/support/">Support</a> &middot;
+    <a href="/privacy/">Privacy</a> &middot;
+    <a href="/blog/feed.xml">RSS</a> &middot;
+    <a href="https://www.linkedin.com/in/mcmizzle">LinkedIn</a>
+  </nav>
+  <p class="footer-legal">&copy; 2026 Kevin McMahon (McMizzle)</p>
+</footer>
+</body>
+</html>

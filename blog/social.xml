@@ -7,6 +7,38 @@
     <language>en-us</language>
     <atom:link href="https://mcmizzle.com/blog/social.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title><![CDATA[isPictureInPicturePossible was true and PiP still wouldn't start]]></title>
+      <link>https://mcmizzle.com/blog/pip-wont-start-avkit-1001/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/pip-wont-start-avkit-1001/</guid>
+      <pubDate>Tue, 22 Sep 2026 12:00:00 +0000</pubDate>
+      <description><![CDATA[A button in my app did nothing when pressed, and the system flag whose entire job is to say whether that button can work said yes, it can work.
+
+The app shows a 3D printer's camera in a small floating window, so you can watch a print while you do something else. Tapping the control that opens that window produced no window, no error, and four seconds of nothing — then a warning that the recording was about to stop, which is the exact outcome the button existed to prevent.
+
+There was an error all along. It was being handed to a callback I had never implemented, and implementing it answered the question on the first press.
+
+The video lives on one tab and the button was on another, and the system will not open a floating window for a video that isn't currently on screen. The flag I was trusting doesn't check that — it checks that I wired things up correctly, which I had. It was answering a question about my code while I read it as a question about right now.
+
+Every search result for that error blames an app not being in the foreground. Mine was in the foreground, being tapped by a person. There is a five-year-old thread on Apple's forums where somebody says exactly that, and nobody ever replied.
+
+So: before you hide or disable a control based on a capability flag, work out what the flag is observing. "Configured" and "possible right now" are different claims, and only one is the one your user is about to test.
+
+Full write-up, with the fix and the two timeout bugs it exposed: https://mcmizzle.com/blog/pip-wont-start-avkit-1001/]]></description>
+      <content:encoded><![CDATA[A button in my app did nothing when pressed, and the system flag whose entire job is to say whether that button can work said yes, it can work.
+
+The app shows a 3D printer's camera in a small floating window, so you can watch a print while you do something else. Tapping the control that opens that window produced no window, no error, and four seconds of nothing — then a warning that the recording was about to stop, which is the exact outcome the button existed to prevent.
+
+There was an error all along. It was being handed to a callback I had never implemented, and implementing it answered the question on the first press.
+
+The video lives on one tab and the button was on another, and the system will not open a floating window for a video that isn't currently on screen. The flag I was trusting doesn't check that — it checks that I wired things up correctly, which I had. It was answering a question about my code while I read it as a question about right now.
+
+Every search result for that error blames an app not being in the foreground. Mine was in the foreground, being tapped by a person. There is a five-year-old thread on Apple's forums where somebody says exactly that, and nobody ever replied.
+
+So: before you hide or disable a control based on a capability flag, work out what the flag is observing. "Configured" and "possible right now" are different claims, and only one is the one your user is about to test.
+
+Full write-up, with the fix and the two timeout bugs it exposed: https://mcmizzle.com/blog/pip-wont-start-avkit-1001/]]></content:encoded>
+    </item>
+    <item>
       <title><![CDATA[Picture in Picture kept freezing, and it was the audio session]]></title>
       <link>https://mcmizzle.com/blog/pip-freezing-audio-session/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/pip-freezing-audio-session/</guid>

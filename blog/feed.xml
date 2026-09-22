@@ -10,6 +10,13 @@
     <!-- ITEMS: newest first. Add each new post as the first <item>.
          pubDate must be RFC-822, e.g. Fri, 07 Aug 2026 12:00:00 +0000 -->
     <item>
+      <title>isPictureInPicturePossible was true and PiP still wouldn't start</title>
+      <link>https://mcmizzle.com/blog/pip-wont-start-avkit-1001/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/pip-wont-start-avkit-1001/</guid>
+      <pubDate>Tue, 22 Sep 2026 12:00:00 +0000</pubDate>
+      <description>startPictureInPicture() returned nothing, no window appeared, and the flag said it should have. The error was real and was arriving in the one delegate method I had never implemented: AVKitErrorDomain -1001. Every search result blames the scene's activation state. Mine was foreground the whole time — AVKit will not start Picture in Picture for a player layer that is not on screen, and a layer in another tab counts.</description>
+    </item>
+    <item>
       <title>Picture in Picture kept freezing, and it was the audio session</title>
       <link>https://mcmizzle.com/blog/pip-freezing-audio-session/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/pip-freezing-audio-session/</guid>

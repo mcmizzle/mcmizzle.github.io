@@ -36,6 +36,19 @@
   <!-- POST LIST: newest first. Add each new post as the first <li>. -->
   <ul class="post-list">
     <li>
+      <p class="post-meta">September 22, 2026</p>
+      <span class="post-title"><a href="/blog/pip-wont-start-avkit-1001/">isPictureInPicturePossible was true and PiP still wouldn't start</a></span>
+      <p class="post-summary">
+        <code>startPictureInPicture()</code> returned nothing, no window
+        appeared, and the flag said it should have. The error was real and was
+        arriving in the one delegate method I had never implemented:
+        <code>AVKitErrorDomain -1001</code>. Every search result blames the
+        scene's activation state. Mine was foreground the whole time — AVKit
+        will not start Picture in Picture for a player layer that is not on
+        screen, and a layer in another tab counts.
+      </p>
+    </li>
+    <li>
       <p class="post-meta">September 15, 2026</p>
       <span class="post-title"><a href="/blog/pip-freezing-audio-session/">Picture in Picture kept freezing, and it was the audio session</a></span>
       <p class="post-summary">
