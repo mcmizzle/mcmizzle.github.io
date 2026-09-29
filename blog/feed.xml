@@ -10,6 +10,13 @@
     <!-- ITEMS: newest first. Add each new post as the first <item>.
          pubDate must be RFC-822, e.g. Fri, 07 Aug 2026 12:00:00 +0000 -->
     <item>
+      <title>An hourly HealthKit query returned all zeros, and the Health app had the data</title>
+      <link>https://mcmizzle.com/blog/healthkit-collection-query-returns-zero/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/healthkit-collection-query-returns-zero/</guid>
+      <pubDate>Tue, 29 Sep 2026 12:00:00 +0000</pubDate>
+      <description>An HKStatisticsCollectionQuery handed back empty buckets for a week the Health app showed as fully populated. Every query ran, nothing errored, and permission was fine. The variable was .strictStartDate — nearly free on a single-interval sum, and enough to empty every bucket of the hourly one, by more than the documented behavior accounts for.</description>
+    </item>
+    <item>
       <title>isPictureInPicturePossible was true and PiP still wouldn't start</title>
       <link>https://mcmizzle.com/blog/pip-wont-start-avkit-1001/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/pip-wont-start-avkit-1001/</guid>

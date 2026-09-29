@@ -36,6 +36,18 @@
   <!-- POST LIST: newest first. Add each new post as the first <li>. -->
   <ul class="post-list">
     <li>
+      <p class="post-meta">September 29, 2026</p>
+      <span class="post-title"><a href="/blog/healthkit-collection-query-returns-zero/">An hourly HealthKit query returned all zeros, and the Health app had the data</a></span>
+      <p class="post-summary">
+        An <code>HKStatisticsCollectionQuery</code> handed back empty buckets
+        for a week the Health app showed as fully populated. Every query ran,
+        nothing errored, and permission was fine. The variable was
+        <code>.strictStartDate</code> — nearly free on a single-interval sum,
+        and enough to empty every bucket of the hourly one, by more than the
+        documented behavior accounts for.
+      </p>
+    </li>
+    <li>
       <p class="post-meta">September 22, 2026</p>
       <span class="post-title"><a href="/blog/pip-wont-start-avkit-1001/">isPictureInPicturePossible was true and PiP still wouldn't start</a></span>
       <p class="post-summary">

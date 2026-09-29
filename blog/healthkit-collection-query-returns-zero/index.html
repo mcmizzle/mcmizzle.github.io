@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>An hourly HealthKit query returned all zeros, and the Health app had the data — McMizzle</title>
+<meta name="description" content="An hourly HKStatisticsCollectionQuery came back empty while a plain sum over the same range was correct. The only variable was .strictStartDate.">
+<link rel="canonical" href="https://mcmizzle.com/blog/healthkit-collection-query-returns-zero/">
+<link rel="alternate" type="application/rss+xml" title="McMizzle Blog" href="https://mcmizzle.com/blog/feed.xml">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf6ec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201a13">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://mcmizzle.com/blog/healthkit-collection-query-returns-zero/">
+<meta property="og:title" content="An hourly HealthKit query returned all zeros, and the Health app had the data — McMizzle">
+<meta property="og:description" content="An hourly HKStatisticsCollectionQuery came back empty while a plain sum over the same range was correct. The only variable was .strictStartDate.">
+<meta property="og:image" content="https://mcmizzle.com/assets/og-healthkit-collection-query-returns-zero.png">
+<meta property="article:published_time" content="2026-09-29">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
+<main>
+<article class="post">
+  <h1>An hourly HealthKit query returned all zeros, and the Health app had the data</h1>
+  <p class="post-meta">Kevin McMahon · September 29, 2026</p>
+
+  <p>
+    <a href="/calorieburndown/">Calorie Burndown</a> put up a screen saying it
+    couldn't read my Health data. Health could read it fine. Opening the Health
+    app on the same phone, in the same minute, showed a resting energy average
+    of 2,052 calories a day for the week the app claimed to know nothing about.
+    Every day of it populated.
+  </p>
+
+  <p>
+    That combination took four rounds to explain, and three of them produced a
+    confident wrong answer first. The cause was a single predicate option that
+    is correct on the query it was written for and catastrophic on the query it
+    got carried onto.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what's basal energy?</summary>
+    <p>
+      The calories your body burns just existing — breathing, keeping warm,
+      running a heart. On Apple's platforms it's usually written to Health by
+      an Apple Watch, continuously, all day, and it's much larger than the
+      part you burn by moving around. An app that tells you how much you have
+      left to eat is mostly reporting this number.
+    </p>
+  </details>
+
+  <h2>Three wrong answers, each killed by the next measurement</h2>
+
+  <p>
+    <strong>"Health access was revoked."</strong> It fits the symptom perfectly,
+    and a revoked grant does make reads fail rather than come back empty. Killed
+    by a device capture: across 452,455 lines, 43 resting-energy collection
+    queries were executed and 43 completed. Not one query error. Not one
+    <code>healthd</code> error. The subsystem was answering every time.
+  </p>
+
+  <p>
+    <strong>"The store genuinely has no resting energy."</strong> A legitimate
+    state — plenty of people have no Apple Watch and so no basal samples at
+    all, and the app has a designed answer for exactly that. Its own logging
+    said this was the case. Killed by looking at the Health app, the one
+    instrument in this story that sits outside the system under test.
+  </p>
+
+  <p>
+    <strong>"The read permission for that one type is off."</strong> Consistent
+    with how HealthKit behaves: a read against an unauthorized type returns an
+    empty result rather than an error, so an app cannot tell whether you said
+    no. Killed by running a plain sum over the same seven days, which returned
+    15,050 calories — roughly 2,150 a day, which is not the Health app's figure
+    to the calorie but is very plainly not zero.
+  </p>
+
+  <p>
+    So: the queries ran, the data existed, and permission was fine. Three
+    rounds of asking the app what it could see, when the thing that reframed
+    everything was a screenshot of the data itself.
+  </p>
+
+  <h2>The probe that actually worked</h2>
+
+  <p>
+    The fourth attempt stopped asking "what does the app read?" and asked
+    "what does this read return under four combinations of one variable?" —
+    same day, same quantity type, same device, one run:
+  </p>
+
+  <pre><code>probe day = 2026-09-23 05:00:00 +0000
+
+plain sum,         .strictStartDate -&gt; 2138
+plain sum,         no options       -&gt; 2206
+hourly collection, .strictStartDate -&gt; total=0    intervals=25
+hourly collection, no options       -&gt; total=2206
+</code></pre>
+
+  <p>
+    A single reading cannot isolate a variable no matter how carefully it is
+    taken. Four differing in one thing name the mechanism in one run:
+    <code>.strictStartDate</code> costs the plain query 68 calories and zeroes
+    the collection query completely.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what's a statistics collection query?</summary>
+    <p>
+      HealthKit gives you two shapes of totalling query. One adds up
+      everything in a range and hands back a single number. The other chops
+      the range into repeating intervals — every hour, every day — and hands
+      back a number per interval, so you can draw a chart. They take the same
+      arguments, which is what makes it easy to move code from one to the
+      other without thinking about it.
+    </p>
+  </details>
+
+  <h2>What "strict" is strict about</h2>
+
+  <p>
+    Apple documents the option in one sentence. From
+    <a href="https://developer.apple.com/documentation/healthkit/hkqueryoptions/strictstartdate">HKQueryOptions.strictStartDate</a>:
+  </p>
+
+  <blockquote>
+    <p>The sample’s start time must fall within the target time period.</p>
+  </blockquote>
+
+  <p>
+    The load-bearing word is <em>target</em>, and on a plain sum its meaning
+    is unambiguous: one target, the size of the whole range. The cost is the
+    samples that start before the range does, and the probe day has exactly
+    one — it begins at 04:59:15, before the 05:00 start, and carries 67
+    calories. Loose sum 2206, strict sum 2138. The option costs that sample,
+    to within a calorie, and nothing else.
+  </p>
+
+  <p>
+    On a collection query, the documentation never says what <em>target</em>
+    means. If it means the intervals — twenty-five in the probe day, an hour
+    apart — the same rule should cost one sample per boundary, because basal
+    energy does not arrive in tidy hour-shaped pieces. Here are the first
+    few samples, against a day starting at 05:00:00:
+  </p>
+
+  <pre><code>04:59:15 -&gt; 05:53:33   67 cal    &lt;- starts before the day does
+05:53:33 -&gt; 05:53:54    0
+05:53:54 -&gt; 06:13:01   23
+06:13:01 -&gt; 06:13:42    1
+</code></pre>
+
+  <p>
+    Long, continuous, and largely indifferent to where the clock says an
+    hour ends. But read those starts against their buckets: 05:53:33 and
+    05:53:54 both start inside the 05:00 hour, and 06:13:01 starts inside
+    the 06:00 hour. A rule about start times admits every one of them, each
+    into the interval it starts in. The only sample with nowhere to go is
+    the 04:59:15 one — the same sample the plain query loses.
+  </p>
+
+  <p>
+    So that reading predicts an hourly total near 2139, the strict plain
+    sum. The measured total was <em>zero</em>, across all twenty-five
+    intervals. Boundary exclusion is real — its price is the paragraph above
+    — but it does not account for what the collection query did, and from
+    outside HealthKit I can't tell you what does.
+  </p>
+
+  <p>
+    The fix is measurable even so: drop the option and HealthKit apportions
+    a straddling sample across the intervals it overlaps, which is what a
+    cumulative energy total wants in the first place. The loose hourly run
+    returns 2206, matching the plain loose sum.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what's a HealthKit sample?</summary>
+    <p>
+      One recorded observation, with a start time and an end time. Some are
+      instants — a meal you logged, a weight reading. Others cover a stretch
+      of time, and a stretch can be long: a single resting-energy sample here
+      runs the best part of an hour. A sample that begins at 4:59 and ends at
+      5:53 belongs to two different hours, and something has to decide how to
+      split it.
+    </p>
+  </details>
+
+  <h2>Why it survived, and why nothing caught it</h2>
+
+  <p>
+    The option was correct when it was written. A few weeks earlier I'd
+    changed that read from a plain daily sum to an hourly one, to fix a real
+    defect: a
+    watch worn four hours shouldn't have its basal rate divided by twenty-four.
+    That change was right. The predicate came along unchanged.
+  </p>
+
+  <p>
+    The failure is silent by construction, which is the part that cost the
+    time. An all-zero bucket array is <em>indistinguishable from a legitimate
+    state</em>: a user with no Apple Watch really does have no basal energy.
+    So every layer above read "no resting data" and reported it honestly, all
+    the way up to a screen telling me to go check a Health permission that was
+    working perfectly.
+  </p>
+
+  <p>
+    This is the same shape as
+    <a href="/blog/healthkit-widget-shows-zero/">the other way a HealthKit read
+    lies to you</a>: there, a failed query and an empty day were the same
+    object, and coercing one to zero published a confident false number. Here
+    the query succeeded. Nothing failed at all. The answer was simply the wrong
+    answer, and it was a plausible one.
+  </p>
+
+  <h2>What I can't tell you</h2>
+
+  <p>
+    Two things. First, whether this is new. I only ever ran this query shape
+    on iOS 27 — the hourly read landed while the phone was already on the
+    beta, and the measurements above were taken on iOS 27.0 (24A437) on an
+    iPhone 17. I have no iOS 26 data point, so I cannot separate "the
+    option was always wrong here" from "something changed underneath it."
+  </p>
+
+  <p>
+    There is reason to think something did. Two Apple Developer Forums threads
+    describe the same family of symptom on iOS 27 —
+    <a href="https://developer.apple.com/forums/thread/838450">838450</a>, where
+    a collection query returns no quantity for buckets a plain statistics query
+    reads fine, and
+    <a href="https://developer.apple.com/forums/thread/842754">842754</a>, where
+    historical step counts go missing. Both posters use
+    <code>.strictStartDate</code>. Neither has a solution, and on the second an
+    Apple engineer says the behavior "does sound like a bug" and asks for a
+    feedback report. A reply landed on the first while I was writing this,
+    reporting that choosing "limited access" in Health clears it and full
+    access does not — which I cannot account for either, and which is a
+    second one-variable comparison somebody should run.
+  </p>
+
+  <p>
+    Cutting the other way, the oldest report I found predates iOS 27 by a year
+    and describes this option on exactly this query shape:
+    <a href="https://developer.apple.com/forums/thread/786576">786576</a>,
+    June 2025, hourly intervals over <code>basalEnergyBurned</code> with
+    <code>.strictStartDate</code>, where the first interval reads low and the
+    low interval moves when the window moves. That is a partial loss at the
+    leading boundary, which is what the documented rule predicts and what my
+    plain query does. So the option was already costing people samples here
+    before iOS 27 — evidence for "always wrong," and at the same time the
+    clearest evidence I have that an empty day is a different animal.
+  </p>
+
+  <p>
+    The gap above cuts the same way: if the documented rule only accounts
+    for one sample per boundary, an empty bucket array is more than this
+    option should be able to do. That argues for something being wrong
+    underneath, not against it.
+  </p>
+
+  <p>
+    So, put no more strongly than it deserves: <code>.strictStartDate</code>
+    is the variable that flips this on my device, the loose read is correct,
+    and removing it is defensible on its own terms whatever Apple concludes.
+    What I am not claiming is an explanation for the size of the failure.
+    Nobody in those threads appears to have run the one-variable comparison —
+    the 2025 one gets as far as someone suggesting the predicate options are
+    worth a look — and it takes one build.
+  </p>
+
+  <h2>Don't generalize the fix without measuring it</h2>
+
+  <p>
+    The obvious follow-on is to strip <code>.strictStartDate</code> everywhere.
+    I measured that instead of assuming it, and the answer was no. For the types
+    still reaching a figure through a plain sum — dietary and active energy —
+    the delta between strict and loose was exactly zero, on a single day and on
+    a seven-day window. Meals are instants, and active energy samples don't
+    straddle the boundaries that matter here. Only basal moved, and basal no
+    longer uses that path.
+  </p>
+
+  <p>
+    Moving live figures for a measured zero is churn, so the option stays on
+    the single-interval queries — with the measurement written down next to it,
+    so the question is settled rather than reopened.
+  </p>
+
+  <h2>What I'd tell you to check first</h2>
+
+  <p>
+    If a HealthKit collection query is handing you empty buckets and the Health
+    app disagrees, run the same read four ways before you theorize about
+    anything:
+  </p>
+
+  <pre><code>// Same type, same day, same device, one run.
+let variants: [(String, HKQueryOptions)] = [("strict", .strictStartDate), ("loose", [])]
+
+for (label, options) in variants {
+    print("plain ", label, await plainSum(type, day, options))
+    print("hourly", label, await hourlyTotals(type, day, options))
+}
+</code></pre>
+
+  <p>
+    If the plain row is right and the hourly row is empty, it is the predicate,
+    not the store and not your permissions.
+  </p>
+
+  <p>
+    The transferable half is bigger than one option. <strong>When you change a
+    read's shape — one interval to many, single to collection, one range to
+    many — re-derive its predicate rather than carrying it.</strong> Query
+    options are assertions about interval boundaries, and changing the
+    intervals changes what they assert. Nothing in the compiler, the tests or
+    the type system has an opinion about that, and the result of getting it
+    wrong is not an error. It's a number that looks like a fact about the user.
+  </p>
+
+  <p>
+    And when your instrument and the ground truth disagree, go get the ground
+    truth from outside the system under test. Three rounds here were spent
+    asking the app what it could see. One screenshot of the Health app
+    reframed all of them.
+  </p>
+</article>
+<nav class="post-nav"><a href="/blog/">← All posts</a></nav>
+</main>
+<footer>
+  <nav class="footer-links">
+    <a href="/about/">About</a> &middot;
+    <a href="/blog/">Blog</a> &middot;
+    <a href="/printing/">3D printing</a> &middot;
+    <a href="/support/">Support</a> &middot;
+    <a href="/privacy/">Privacy</a> &middot;
+    <a href="/blog/feed.xml">RSS</a> &middot;
+    <a href="https://www.linkedin.com/in/mcmizzle">LinkedIn</a>
+  </nav>
+  <p class="footer-legal">&copy; 2026 Kevin McMahon (McMizzle)</p>
+</footer>
+</body>
+</html>

@@ -7,6 +7,42 @@
     <language>en-us</language>
     <atom:link href="https://mcmizzle.com/blog/social.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title><![CDATA[An hourly HealthKit query returned all zeros, and the Health app had the data]]></title>
+      <link>https://mcmizzle.com/blog/healthkit-collection-query-returns-zero/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/healthkit-collection-query-returns-zero/</guid>
+      <pubDate>Tue, 29 Sep 2026 12:00:00 +0000</pubDate>
+      <description><![CDATA[My app put up a screen saying it could not read my health data. The Health app, on the same phone, in the same minute, showed a full week of exactly the data it said it could not read.
+
+Three explanations came and went. Access had been revoked — no, a capture showed 43 queries running and 43 completing, with no errors anywhere. The store was empty — no, the screenshot was of the data itself. The permission was off — no, a simpler version of the same query returned seven days of it.
+
+What settled it was not reasoning harder. It was running the same read four ways in one go, changing exactly one thing, and reading the results next to each other.
+
+The one thing was a query option that says a measurement counts only if it starts inside the window you asked about. On a query that asks about one window, that is almost free: it cost me exactly one measurement. I had changed the query to ask about every hour of the day separately, for a good reason, and carried the option along without thinking. On that version it returned nothing at all, for every hour of every day.
+
+I can account for the one missing measurement. I cannot account for all of them, and noticing that was the useful part of writing it up.
+
+Nothing failed. The query ran. It returned zero, and zero is a perfectly plausible answer that every layer above it reported faithfully.
+
+The general version: when you change the shape of a query, re-derive its filters instead of carrying them. A filter is an assumption about boundaries, and moving the boundaries changes what it assumes.
+
+Full write-up, with the four-way probe: https://mcmizzle.com/blog/healthkit-collection-query-returns-zero/]]></description>
+      <content:encoded><![CDATA[My app put up a screen saying it could not read my health data. The Health app, on the same phone, in the same minute, showed a full week of exactly the data it said it could not read.
+
+Three explanations came and went. Access had been revoked — no, a capture showed 43 queries running and 43 completing, with no errors anywhere. The store was empty — no, the screenshot was of the data itself. The permission was off — no, a simpler version of the same query returned seven days of it.
+
+What settled it was not reasoning harder. It was running the same read four ways in one go, changing exactly one thing, and reading the results next to each other.
+
+The one thing was a query option that says a measurement counts only if it starts inside the window you asked about. On a query that asks about one window, that is almost free: it cost me exactly one measurement. I had changed the query to ask about every hour of the day separately, for a good reason, and carried the option along without thinking. On that version it returned nothing at all, for every hour of every day.
+
+I can account for the one missing measurement. I cannot account for all of them, and noticing that was the useful part of writing it up.
+
+Nothing failed. The query ran. It returned zero, and zero is a perfectly plausible answer that every layer above it reported faithfully.
+
+The general version: when you change the shape of a query, re-derive its filters instead of carrying them. A filter is an assumption about boundaries, and moving the boundaries changes what it assumes.
+
+Full write-up, with the four-way probe: https://mcmizzle.com/blog/healthkit-collection-query-returns-zero/]]></content:encoded>
+    </item>
+    <item>
       <title><![CDATA[isPictureInPicturePossible was true and PiP still wouldn't start]]></title>
       <link>https://mcmizzle.com/blog/pip-wont-start-avkit-1001/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/pip-wont-start-avkit-1001/</guid>
