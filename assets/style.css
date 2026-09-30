@@ -86,7 +86,7 @@ p, li {
 
 /* Was Georgia italic — the only serif on the site, and the element that most
    read as personal blog rather than product. Now the same stack as everything
-   else, carried by size and colour instead of by a second typeface. */
+   else, carried by size and color instead of by a second typeface. */
 .tagline {
   color: var(--muted);
   margin-top: 0;
@@ -307,7 +307,7 @@ article.post img {
 
 /* Screenshots on the app pages. Phone captures are tall and narrow; letting
    one fill the column makes it taller than the viewport, so portrait shots are
-   capped and centred while a landscape one may use the full width. */
+   capped and centered while a landscape one may use the full width. */
 .screenshot {
   margin: 2rem 0;
 }
