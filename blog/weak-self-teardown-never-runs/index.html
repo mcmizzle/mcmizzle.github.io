@@ -91,7 +91,7 @@ compositor = nil        // or the owner is released, and takes it along
 </code></pre>
 
   <p>
-    Which is a race with a clear favourite. <code>queue.async</code> retains the
+    Which is a race with a clear favorite. <code>queue.async</code> retains the
     <em>queue</em> until the block runs. It does not retain <code>self</code>,
     because you asked it not to. So the last strong reference to the compositor
     can go away on the calling thread while the block is still sitting in the
@@ -214,7 +214,7 @@ deinit {
 
   <p>
     The <code>deinit</code> is a backstop rather than the fix. It covers the
-    paths where <code>stop()</code> is never called at all — an initialiser that
+    paths where <code>stop()</code> is never called at all — an initializer that
     throws partway through, an owner released without its teardown hook running.
     It is safe to touch queue-confined state from there: if <code>deinit</code>
     is running then nothing else holds a reference, so there is nothing left to

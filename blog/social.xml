@@ -147,7 +147,7 @@ Those checks ask whether the model is a sealed, printable solid — no holes in 
 
 The bug was in shrinking a shape by a fixed distance. The obvious method — move every corner inward — falls apart twice: it flings sharp corners off into space, and where the outline curves tighter than the distance you're shrinking by, it turns inside out and crosses itself. A self-crossing outline still encloses something, so the model comes out sealed, printable, and wrong.
 
-The general version isn't really about 3D printing. A validity check tells you an artefact is well-formed. It does not tell you it's the artefact you meant. If you generate your output rather than authoring it by hand, that gap is where your bugs will live.
+The general version isn't really about 3D printing. A validity check tells you an artifact is well-formed. It does not tell you it's the artifact you meant. If you generate your output rather than authoring it by hand, that gap is where your bugs will live.
 
 Full write-up, with the measurements, the twenty-line test that catches it, and the check I nearly shipped instead that fires on perfectly good geometry: https://mcmizzle.com/blog/watertight-mesh-wrong-shape/]]></description>
       <content:encoded><![CDATA[A part came off my 3D printer with 4 mm tongues of plastic reaching into openings that were supposed to have a clean 1.4 mm border. Every automated check I run before printing was green, and had been for months.
@@ -158,7 +158,7 @@ Those checks ask whether the model is a sealed, printable solid — no holes in 
 
 The bug was in shrinking a shape by a fixed distance. The obvious method — move every corner inward — falls apart twice: it flings sharp corners off into space, and where the outline curves tighter than the distance you're shrinking by, it turns inside out and crosses itself. A self-crossing outline still encloses something, so the model comes out sealed, printable, and wrong.
 
-The general version isn't really about 3D printing. A validity check tells you an artefact is well-formed. It does not tell you it's the artefact you meant. If you generate your output rather than authoring it by hand, that gap is where your bugs will live.
+The general version isn't really about 3D printing. A validity check tells you an artifact is well-formed. It does not tell you it's the artifact you meant. If you generate your output rather than authoring it by hand, that gap is where your bugs will live.
 
 Full write-up, with the measurements, the twenty-line test that catches it, and the check I nearly shipped instead that fires on perfectly good geometry: https://mcmizzle.com/blog/watertight-mesh-wrong-shape/]]></content:encoded>
     </item>
@@ -173,7 +173,7 @@ The encoder was told: a keyframe at least every second. It obliged, and then it 
 
 Two things I'd pass on.
 
-The first is that the behaviour was documented the whole time, on the page for a *different* property, reached by a one-line "see also" from the page I was reading. I'd decided the page I was on told me what I needed. Fifteen minutes of reading both would have saved the evening.
+The first is that the behavior was documented the whole time, on the page for a *different* property, reached by a one-line "see also" from the page I was reading. I'd decided the page I was on told me what I needed. Fifteen minutes of reading both would have saved the evening.
 
 The second is about a name. The constant I'd written for this was called "keyframe arrival tolerance" — it existed to absorb keyframes arriving slightly late. Late is one tail of a two-sided distribution, and for as long as the constant was named after that tail, the other tail wasn't something I thought to look for. Renaming it to what it actually enforces — a minimum segment length — made the bug obvious.
 
@@ -186,7 +186,7 @@ The encoder was told: a keyframe at least every second. It obliged, and then it 
 
 Two things I'd pass on.
 
-The first is that the behaviour was documented the whole time, on the page for a *different* property, reached by a one-line "see also" from the page I was reading. I'd decided the page I was on told me what I needed. Fifteen minutes of reading both would have saved the evening.
+The first is that the behavior was documented the whole time, on the page for a *different* property, reached by a one-line "see also" from the page I was reading. I'd decided the page I was on told me what I needed. Fifteen minutes of reading both would have saved the evening.
 
 The second is about a name. The constant I'd written for this was called "keyframe arrival tolerance" — it existed to absorb keyframes arriving slightly late. Late is one tail of a two-sided distribution, and for as long as the constant was named after that tail, the other tail wasn't something I thought to look for. Renaming it to what it actually enforces — a minimum segment length — made the bug obvious.
 
