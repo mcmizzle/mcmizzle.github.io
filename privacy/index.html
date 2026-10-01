@@ -23,7 +23,7 @@
 <header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
 <main>
   <h1>Privacy Policy</h1>
-  <p class="tagline">Last updated: September 11, 2026. Applies to every McMizzle app, including AmbientCast and Calorie Burndown.</p>
+  <p class="tagline">Last updated: October 1, 2026. Applies to every McMizzle app, including AmbientCast and Calorie Burndown.</p>
 
   <p>
     The short version: your data stays on your own devices and in your own
@@ -31,8 +31,10 @@
     because there isn't one — every McMizzle app talks directly to the
     devices and services you've chosen to connect it to (your own printer on
     your own network, or YouTube), to Apple's own on-device frameworks (like
-    HealthKit), or to your own iCloud account to keep an app's own settings
-    and history in step across your devices, and nowhere else.
+    HealthKit), or to your own iCloud account — to keep an app's own settings
+    and history in step across your devices, and, in AmbientCast, to carry
+    something you have asked it to carry from one of your devices to another —
+    and nowhere else.
   </p>
 
   <h2>What McMizzle apps store, and where</h2>
@@ -47,14 +49,29 @@
     </li>
     <li>
       <strong>Printer access codes and camera passwords</strong> (AmbientCast)
-      are stored in your device's Keychain too, and they <strong>stay on the
-      device you typed them into</strong>. There is no setting that shares
-      them. An earlier version of AmbientCast offered to sync them through
-      iCloud Keychain; that option has been removed, and the app moves any
-      credential it had put there back to the device — and out of iCloud — the
-      next time it launches. The practical consequence is that a printer's
-      access code has to be entered on each device you want to watch it
-      from.
+      are stored in your device's Keychain too. A camera's username and
+      password <strong>stay on the device you typed them into</strong>; there is
+      no setting that shares those. A printer's access code does too, unless you
+      turn on <strong>Sync Credentials</strong> in AmbientCast's Settings — a
+      setting of its own, beside the Sync with iCloud switch rather than part of
+      it, and off until you turn it on. With it on, each access code is
+      <strong>encrypted on your device before it is sent</strong> and kept in
+      your own private iCloud database, so your other devices can use it; the
+      key is derived from your iCloud Keychain, which means <strong>neither
+      Apple nor McMizzle can read it</strong>.
+      <strong>Turning the setting off takes them back out of iCloud</strong>:
+      the device deletes the codes for the printers it knows about — it cannot
+      speak for one only another device has set up — and every device keeps its
+      own local copy, so nothing stops working. Deleting a printer removes its
+      code from iCloud too, and from your other devices with it.
+      Sync Credentials exists because a printer's access code is eight
+      characters that otherwise have to be typed on an Apple TV remote for
+      every device you want to watch from. An earlier version of AmbientCast
+      tried to do this through iCloud Keychain and that was removed: Apple does
+      not synchronize
+      an app's Keychain items to or from tvOS, so the option did nothing on the
+      platform most people use it on. This uses a different mechanism, which
+      does work there.
     </li>
     <li>
       <strong>Health &amp; fitness data</strong> (e.g. Calorie Burndown's use of
@@ -73,29 +90,56 @@
     </li>
     <li>
       <strong>iCloud sync</strong> — some apps keep a small amount of their
-      own data in step across your devices using Apple's iCloud. This is
-      Apple's storage inside <em>your</em> Apple Account, not a McMizzle
-      server: McMizzle cannot read it, and it stops as soon as you sign out
-      of iCloud on that device. What syncs today:
+      own data in step across your devices using Apple's iCloud, and
+      AmbientCast can also use it to hand something from one of your devices
+      to another. This is Apple's storage inside <em>your</em> Apple Account,
+      not a McMizzle server: McMizzle cannot read it, and it stops as soon as
+      you sign out of iCloud on that device. What goes there today:
       <ul>
         <li><strong>Calorie Burndown</strong> — your goal settings: target
           weight, target date, and any manual overrides you have entered.
           <strong>Your health data is not included</strong> — nothing read
           from HealthKit is ever written to iCloud.</li>
         <li><strong>AmbientCast</strong> — your custom watermark image; the
-          printers and cameras you have set up (names, addresses, ports,
-          stream paths and connection modes), so a camera added on your iPhone
-          appears on your Apple TV; the list of timelapses the app has
-          published to YouTube (video identifiers, titles, printer names,
-          publish times, and whether the print failed), including a record of
-          which entries you have since removed from that list; and, if you use
-          that feature, which of your devices is recording the timelapse — a
-          random identifier for the device that has claimed the job, so two of
-          your devices watching the same print don't both record it. It
-          identifies the device to your other devices, not you to anyone.
-          <strong>No access code or password is included</strong> in any of
-          that — those stay in each device's Keychain and never leave the
-          device they were entered on.</li>
+          printers and cameras you have set up (names, serial numbers,
+          addresses, ports, stream paths and connection modes), so a camera
+          added on your iPhone appears on your Apple TV; the list of
+          timelapses the app has published to YouTube (video identifiers,
+          titles, printer names, publish times, and whether the print failed),
+          including a record of which entries you have since removed from that
+          list; and, if you use that feature, which of your devices is
+          recording the timelapse — a random identifier for the device that has
+          claimed the job, so two of your devices watching the same print
+          don't both record it. It identifies the device to your other
+          devices, not you to anyone.
+          <strong>No access code or password is in that list</strong> — those
+          are a separate, opt-in thing, described in the two points below.</li>
+        <li><strong>AmbientCast's printer access codes</strong> — but only if
+          you turn on <strong>Sync Credentials</strong>, which is off unless you
+          do, and which is its own setting rather than part of the Sync with
+          iCloud switch that covers the items above. These travel to the same
+          Apple Account by a different route (CloudKit, rather than the
+          key-value storage the items above use), as records
+          <strong>encrypted on your device before they are sent</strong>, with
+          a key derived from your iCloud Keychain. Neither Apple nor McMizzle
+          can read them. This is the only thing listed here that is a secret,
+          which is why it is off by default, asked for on its own, and
+          removed from iCloud again when you turn it off. Camera usernames and
+          passwords are not included: those never leave the device they were
+          entered on.</li>
+        <li><strong>A diagnostics report, if you ask AmbientCast on your Apple
+          TV to send one</strong> — the Apple TV has no share sheet of its own,
+          so the report goes to your private iCloud database for your iPhone to
+          pick up and share. It is the app's own logs, encrypted on the device
+          before it is sent, and it is the same text you can read on screen
+          first: the access codes, camera usernames and passwords, and printer
+          serial numbers the app holds are replaced before it is written, while
+          network addresses, printer models and error codes are kept, because
+          those are what make a log useful. Nothing is sent unless you ask for
+          it, there is one report per device, and sending again from that device
+          replaces the last one. The Apple TV that sent it can take it back out
+          of iCloud from the same screen. It reaches McMizzle only if you then
+          choose to share it from your iPhone.</li>
       </ul>
     </li>
   </ul>
@@ -103,7 +147,10 @@
   <h2>What McMizzle apps don't do</h2>
   <ul>
     <li>No analytics, crash reporting, advertising, or tracking SDKs of any
-      kind are included in any McMizzle app.</li>
+      kind are included in any McMizzle app. Nothing is gathered in the
+      background to send anywhere: AmbientCast can assemble a diagnostics
+      report from its own logs, and it is written when you ask for it and goes
+      where you send it.</li>
     <li>No account credentials, health data, or usage data are ever sent to
       any server McMizzle operates.</li>
     <li>Nothing is sold or shared with third parties beyond the services
@@ -148,7 +195,11 @@
       revoke AmbientCast's access at
       <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.
       Deleting a printer or camera deletes its access code or password with
-      it.</li>
+      it — including a printer's copy in your iCloud, if you turned on Sync
+      Credentials, and on your other devices too; that happens whether the
+      setting is on or off. Turning Sync Credentials off also takes the codes
+      already in iCloud back out, while leaving each device the local copy it
+      is using.</li>
     <li><strong>Health &amp; fitness data</strong> is read from Apple's
       HealthKit on demand and is not kept beyond what your widgets and watch
       complication need to show today's figures — those are held in an
@@ -165,7 +216,9 @@
       that device syncing. What is already in your Apple Account stays there,
       under Apple's control rather than McMizzle's: there is no McMizzle copy
       of it, and nothing to request from McMizzle, because it never reaches
-      us.</li>
+      us. Two things AmbientCast can take back out of iCloud for you: a synced
+      access code, when you turn Sync Credentials off or delete the printer it
+      belongs to, and a diagnostics report, from the Apple TV that sent it.</li>
   </ul>
   <p>
     Deleting a McMizzle app removes everything on your device. Whatever an app
