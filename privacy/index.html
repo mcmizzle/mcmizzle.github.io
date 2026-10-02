@@ -23,7 +23,7 @@
 <header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
 <main>
   <h1>Privacy Policy</h1>
-  <p class="tagline">Last updated: October 1, 2026. Applies to every McMizzle app, including AmbientCast and Calorie Burndown.</p>
+  <p class="tagline">Last updated: October 2, 2026. Applies to every McMizzle app, including AmbientCast and Calorie Burndown.</p>
 
   <p>
     The short version: your data stays on your own devices and in your own
@@ -49,26 +49,27 @@
     </li>
     <li>
       <strong>Printer access codes and camera passwords</strong> (AmbientCast)
-      are stored in your device's Keychain too. A camera's username and
-      password <strong>stay on the device you typed them into</strong>; there is
-      no setting that shares those. A printer's access code does too, unless you
-      turn on <strong>Sync Credentials</strong> in AmbientCast's Settings — a
-      setting of its own, beside the Sync with iCloud switch rather than part of
-      it, and off until you turn it on. With it on, each access code is
+      are stored in your device's Keychain too, and they <strong>stay on the
+      device you typed them into unless you turn on Sync Credentials</strong>,
+      in AmbientCast's Settings — one setting, covering a printer's access code
+      and a camera's username and password alike; a setting of its own, beside
+      the Sync with iCloud switch rather than part of it; and off until you turn
+      it on. With it on, each access code and camera login is
       <strong>encrypted on your device before it is sent</strong> and kept in
       your own private iCloud database, so your other devices can use it; the
       key is derived from your iCloud Keychain, which means <strong>neither
       Apple nor McMizzle can read it</strong>.
       <strong>Turning the setting off takes them back out of iCloud</strong>:
-      the device deletes the codes for the printers it knows about — it cannot
-      speak for one only another device has set up — and every device keeps its
-      own local copy, so nothing stops working. Deleting a printer removes its
-      code from iCloud too, and from your other devices with it.
-      Sync Credentials exists because a printer's access code is eight
-      characters that otherwise have to be typed on an Apple TV remote for
-      every device you want to watch from. An earlier version of AmbientCast
-      tried to do this through iCloud Keychain and that was removed: Apple does
-      not synchronize
+      the device deletes the credentials for the printers and cameras it knows
+      about — it cannot speak for one only another device has set up — and
+      every device keeps its own local copy, so nothing stops working. Deleting a
+      printer or camera also removes its credentials from iCloud, and from
+      your other devices with it.
+      Sync Credentials exists because these are typed on an Apple TV remote
+      otherwise, on every device you want to watch from — and a generic camera
+      is usually the thing you are watching from the Apple TV. An earlier
+      version of AmbientCast tried to do this through iCloud Keychain and that
+      was removed: Apple does not synchronize
       an app's Keychain items to or from tvOS, so the option did nothing on the
       platform most people use it on. This uses a different mechanism, which
       does work there.
@@ -114,19 +115,18 @@
           devices, not you to anyone.
           <strong>No access code or password is in that list</strong> — those
           are a separate, opt-in thing, described in the two points below.</li>
-        <li><strong>AmbientCast's printer access codes</strong> — but only if
-          you turn on <strong>Sync Credentials</strong>, which is off unless you
-          do, and which is its own setting rather than part of the Sync with
-          iCloud switch that covers the items above. These travel to the same
-          Apple Account by a different route (CloudKit, rather than the
-          key-value storage the items above use), as records
-          <strong>encrypted on your device before they are sent</strong>, with
-          a key derived from your iCloud Keychain. Neither Apple nor McMizzle
-          can read them. This is the only thing listed here that is a secret,
-          which is why it is off by default, asked for on its own, and
-          removed from iCloud again when you turn it off. Camera usernames and
-          passwords are not included: those never leave the device they were
-          entered on.</li>
+        <li><strong>AmbientCast's printer access codes, and its cameras'
+          usernames and passwords</strong> — but only if you turn on
+          <strong>Sync Credentials</strong>, which is off unless you do, and
+          which is its own setting rather than part of the Sync with iCloud
+          switch that covers the items above. These travel to the same Apple
+          Account by a different route (CloudKit, rather than the key-value
+          storage the items above use), as records <strong>encrypted on your
+          device before they are sent</strong>, with a key derived from your
+          iCloud Keychain. Neither Apple nor McMizzle can read them. This is
+          the only thing listed here that is a secret, which is why it is off
+          by default, asked for on its own, and removed from iCloud again when
+          you turn it off.</li>
         <li><strong>A diagnostics report, if you ask AmbientCast on your Apple
           TV to send one</strong> — the Apple TV has no share sheet of its own,
           so the report goes to your private iCloud database for your iPhone to
@@ -195,11 +195,11 @@
       revoke AmbientCast's access at
       <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.
       Deleting a printer or camera deletes its access code or password with
-      it — including a printer's copy in your iCloud, if you turned on Sync
-      Credentials, and on your other devices too; that happens whether the
-      setting is on or off. Turning Sync Credentials off also takes the codes
-      already in iCloud back out, while leaving each device the local copy it
-      is using.</li>
+      it — including the copy in your iCloud, if you turned on Sync
+      Credentials, and the copies on your other devices; that happens whether
+      the setting is on or off. Turning Sync Credentials off takes the
+      credentials for the printers and cameras that device has back out of
+      iCloud, while leaving each device the local copy it is using.</li>
     <li><strong>Health &amp; fitness data</strong> is read from Apple's
       HealthKit on demand and is not kept beyond what your widgets and watch
       complication need to show today's figures — those are held in an
@@ -217,8 +217,9 @@
       under Apple's control rather than McMizzle's: there is no McMizzle copy
       of it, and nothing to request from McMizzle, because it never reaches
       us. Two things AmbientCast can take back out of iCloud for you: a synced
-      access code, when you turn Sync Credentials off or delete the printer it
-      belongs to, and a diagnostics report, from the Apple TV that sent it.</li>
+      credential, when you turn Sync Credentials off or delete the printer or
+      camera it belongs to, and a diagnostics report, from the Apple TV that
+      sent it.</li>
   </ul>
   <p>
     Deleting a McMizzle app removes everything on your device. Whatever an app
