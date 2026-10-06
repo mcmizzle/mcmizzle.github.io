@@ -38,40 +38,37 @@
   </p>
 
   <p>
-    The obvious explanation is that the widget was stale, and the obvious fix is
-    to make it refresh more aggressively. That explanation was wrong, and I want
-    to save you the detour, because searching for this symptom turns up a lot of
-    advice about App Group misconfiguration, background-delivery throttling, and
-    <code>reloadAllTimelines()</code> being ignored in the background. All of
-    those are real problems. None of them was this one.
+    The obvious explanation is a stale widget, and the obvious fix is a more
+    aggressive refresh. Both are wrong, and searching the symptom sends you
+    further that way: App Group misconfiguration, background-delivery throttling,
+    <code>reloadAllTimelines()</code> ignored in the background. All real
+    problems. None of them this one.
   </p>
 
   <h2>The timestamp was the tell</h2>
 
   <p>
     The widget renders an "Updated" time in its footer. On those broken mornings
-    that timestamp read a couple of minutes old — not from last night. So a write
-    really had happened, recently. The data wasn't stale. It was freshly wrong,
-    which is a different bug with a different cause, and it immediately rules out
-    the entire category of fixes above. Nothing about redraw scheduling can
-    explain a redraw that happened on time with bad numbers in it.
+    it read a couple of minutes old — not from last night. So a write really had
+    happened, recently. The data wasn't stale. It was freshly wrong, and nothing
+    about redraw scheduling explains a redraw that arrived on time with bad
+    numbers in it.
   </p>
 
   <p>
     The second clue was arithmetic. The number on the widget is
     <code>goal - (basal + active - consumed)</code>. For the remaining deficit to
-    equal the whole goal exactly, that inner expression has to be exactly zero —
-    which, given basal energy alone is never zero over a real day, means all
-    three values were zero simultaneously. Three independent HealthKit reads
-    returning zero at the same instant is not a data problem. It's a read
-    problem.
+    equal the whole goal, that inner expression has to be exactly zero — and
+    basal energy alone is never zero over a real day, so all three values were
+    zero at once. Three independent HealthKit reads returning zero
+    simultaneously is not a data problem. It's a read problem.
   </p>
 
   <h2>HealthKit is encrypted when the phone is locked</h2>
 
   <p>
-    This part is documented, and I'd read the page before without connecting it
-    to the symptom. From Apple's
+    This part is documented. I'd read the page before without connecting it to
+    the symptom. From Apple's
     <a href="https://developer.apple.com/documentation/healthkit/protecting-user-privacy">Protecting user privacy</a>:
   </p>
 
@@ -86,12 +83,11 @@
   </blockquote>
 
   <p>
-    Now put that next to when background wakes actually happen. A HealthKit
-    observer wake, or a background app refresh, fires while the phone is sitting
-    on a nightstand — locked, by definition, most of the time. So the reads that
-    are <em>most</em> likely to fail are precisely the ones running unattended,
-    and the ones that succeed are the ones you're standing there watching, which
-    is why this never reproduced while I was looking at it.
+    Now put that next to when background wakes happen. A HealthKit observer
+    wake, or a background app refresh, fires while the phone sits on a
+    nightstand — locked. So the reads <em>most</em> likely to fail are the ones
+    running unattended, and the ones that succeed are the ones you're standing
+    there watching. That is why it never reproduced while I was looking at it.
   </p>
 
   <details class="eli5">
@@ -133,13 +129,12 @@ let query = HKStatisticsQuery(
 </code></pre>
 
   <p>
-    That third closure parameter is the error, and I had it bound to <code>_</code>.
-    Look at what happens on a locked device. The query fails, so
-    <code>result</code> is nil, so <code>sumQuantity()</code> is never reached,
-    so the <code>?? 0</code> fires and the function returns <strong>0</strong> —
-    a perfectly ordinary <code>Int</code>, indistinguishable from a genuine day
-    with no samples in it. There is no signal left. Every caller downstream got
-    a number that looked like data.
+    That third closure parameter is the error, and I had it bound to
+    <code>_</code>. On a locked device the query fails, so <code>result</code> is
+    nil, so <code>sumQuantity()</code> is never reached, so the
+    <code>?? 0</code> fires and the function returns <strong>0</strong> — an
+    ordinary <code>Int</code>, indistinguishable from a genuine day with no
+    samples in it. Every caller downstream got a number that looked like data.
   </p>
 
   <details class="eli5">
@@ -162,12 +157,11 @@ let query = HKStatisticsQuery(
   <p>
     So the overnight sequence was: wake while locked, fail every read, coerce all
     three energy values to zero, compute a day in which nothing had been eaten or
-    burned, publish it to the widget with a current timestamp, and go back to sleep.
-    Every subsequent locked wake did the same thing again. Nothing corrected it
-    until a foreground launch — which by definition happens with the phone
-    unlocked — finally read something real. That accounts for every part of what
-    I'd been seeing, including the "fixes itself the moment I open the app" part
-    that had me chasing widget refresh in the first place.
+    burned, publish it with a current timestamp, and go back to sleep. Every
+    subsequent locked wake did it again. Nothing corrected it until a foreground
+    launch — which happens with the phone unlocked — finally read something real.
+    That includes the "fixes itself the moment I open the app" part that had me
+    chasing widget refresh to begin with.
   </p>
 
   <p>
@@ -201,25 +195,26 @@ let query = HKStatisticsQuery(
     <a href="https://developer.apple.com/documentation/healthkit/hkerror/code/errornodata"><code>errorNoData</code></a>
     as a real zero and <em>everything else</em> as a failure, because I only want
     to enumerate the errors that are safe to publish, not the ones that aren't.
-    In fairness I should say I have not confirmed on-device which code actually
-    comes back here: reproducing it needs a locked phone during a real background
-    wake, so that specific detail is inference from the documentation rather than
-    something I watched happen.
+  </p>
+
+  <p>
+    I have not confirmed on-device which code actually comes back here —
+    reproducing it needs a locked phone during a real background wake — so that
+    detail is inference from the documentation rather than something I watched
+    happen.
   </p>
 
   <p>
     Since writing that, I found a
     <a href="https://developer.apple.com/forums/thread/824819">May 2026 Developer Forums answer</a>
-    from an Apple DTS engineer that settles the general rule as plainly as
-    you could want: <em>"For privacy reasons, your app is not allowed to read
-    health data while a device is locked, though it can still save data, which
-    is then saved into a temporary file and merged with HealthKit's data when
-    the user unlocks their device."</em> That reply points at
-    <code>errorDatabaseInaccessible</code> for this case, which is good
-    corroboration — though it's still Apple describing the behavior rather than
-    me watching a specific code come back, so I'm leaving the caveat above
-    standing. Worth knowing the answer exists, because it took me a while to
-    find and it isn't in the framework documentation.
+    from an Apple DTS engineer that settles the general rule: <em>"For privacy
+    reasons, your app is not allowed to read health data while a device is
+    locked, though it can still save data, which is then saved into a temporary
+    file and merged with HealthKit's data when the user unlocks their
+    device."</em> It points at <code>errorDatabaseInaccessible</code> for this
+    case. Good corroboration, still Apple describing the behavior rather than a
+    code I watched come back, so the caveat stands. Worth knowing it exists: it
+    took me a while to find, and it isn't in the framework documentation.
   </p>
 
   <h2>One guard wasn't enough</h2>
@@ -227,27 +222,30 @@ let query = HKStatisticsQuery(
   <p>
     Making the read return <code>Int?</code> only moves the problem up a level.
     The refresh routine now returns a Bool and, on failure, leaves every
-    published value untouched and skips its "I have new data" callback entirely —
-    it does nothing rather than committing zeros.
+    published value untouched and skips its "I have new data" callback — it does
+    nothing rather than committing zeros.
   </p>
 
   <p>
     That still wasn't sufficient, and this is the part I'd have missed if I
     hadn't gone looking for other entry points. The callback is not the only way
     data reaches the widget: the app's launch task and the background refresh
-    manager both call the sync routine <em>directly</em>, not via that callback.
-    A process that had never managed a single successful read would still cheerfully
-    publish its freshly-initialized zeros. So the store that writes the widget's
-    payload now refuses to write anything at all until a read has actually
-    succeeded in that process — tracked as a nullable "last successful refresh"
-    date, where nil means "these values are still just their initial zeros," which
-    is not the same claim as "the user has consumed nothing today."
+    manager both call the sync routine <em>directly</em>.
+  </p>
+
+  <p>
+    A process that had never managed one successful read would still publish its
+    freshly-initialized zeros. So the store that writes the widget's payload now
+    refuses to write at all until a read has succeeded in that process — tracked
+    as a nullable "last successful refresh" date, where nil means "these values
+    are still just their initial zeros," which is not the same claim as "the user
+    has consumed nothing today."
   </p>
 
   <p>
     The general form: if you fix this at the read, audit every path that
     publishes. A default-initialized model object is full of zeros too, and those
-    zeros are just as plausible as the ones a failed query produces.
+    are just as plausible as the ones a failed query produces.
   </p>
 
   <h2>The related bug it exposed</h2>
@@ -256,30 +254,36 @@ let query = HKStatisticsQuery(
     Refusing to publish garbage means the widget can now show yesterday's
     numbers, which is correct but needs saying out loud. The payload already
     carried an "updated at" date, but that answers <em>when it was written</em>,
-    not <em>which day it describes</em> — and those are different questions the
-    moment a write can be skipped. So the payload now also carries the start of
-    the day its numbers are about, and the phone widget asks whether that
-    day is still today. If it isn't, it draws in a muted color with a
-    dated footer and a "tap to refresh" line, instead of asserting yesterday's
-    figures in the confident green of a goal you've already met. It also emits a
-    timeline entry at the next midnight so that flip lands on the day boundary
-    even if no refresh gets a chance to run.
+    not <em>which day it describes</em> — different questions the moment a write
+    can be skipped.
+  </p>
+
+  <p>
+    So the payload now also carries the start of the day its numbers are about,
+    and the phone widget asks whether that day is still today. If it isn't, it
+    draws in a muted color with a dated footer and a "tap to refresh" line,
+    instead of asserting yesterday's figures in the confident green of a goal
+    you've already met. It also emits a timeline entry at the next midnight, so
+    the flip lands on the day boundary even if no refresh runs.
   </p>
 
   <p>
     That sentence originally read "anything rendering it," which was the intent
     rather than the state of the code. Two weeks after this was published I found
-    that the watch app and the watch complication both carried the new field
-    faithfully through to their own render paths and then never looked at it, so
-    both would present yesterday's numbers in confident green under a bare
+    the watch app and the watch complication both carried the new field
+    faithfully through to their own render paths and then never looked at it.
+    Both would present yesterday's numbers in confident green under a bare
     "Updated 3:02 AM" — the exact presentation the phone widget had just been
-    fixed to stop making. Worse, the code choosing between a relayed phone
-    payload and a locally computed one still ordered on write time alone, so a
-    payload describing yesterday but stamped "now" strictly outranked a current
-    one. Both are fixed now. I'm leaving the correction visible rather than
-    quietly restating it, because the failure is the more useful half: adding the
-    field was the easy part, and a field only helps where somebody actually reads
-    it.
+    fixed to stop making.
+  </p>
+
+  <p>
+    Worse, the code choosing between a relayed phone payload and a locally
+    computed one still ordered on write time alone, so a payload describing
+    yesterday but stamped "now" strictly outranked a current one. Both are fixed
+    now. I'm leaving the correction visible rather than quietly restating it,
+    because the failure is the more useful half: adding the field was the easy
+    part, and a field only helps where somebody actually reads it.
   </p>
 
   <details class="eli5">
@@ -308,12 +312,14 @@ let query = HKStatisticsQuery(
     If a value in your app is wrong in a way that looks like "nothing happened
     today," find every place you turned a failure into a default with
     <code>??</code>, <code>try?</code>, or an ignored error parameter — and ask
-    what that default renders as. Zero is uniquely dangerous, because zero is a
-    legitimate value in almost every domain. It doesn't look like an error state.
-    It renders as a confident, plausible, correctly-formatted number, and nothing
-    downstream — no view, no test, no person glancing at a widget — has any way
-    to tell it apart from the truth. An error you swallow becomes indistinguishable
-    from data you trust.
+    what that default renders as.
+  </p>
+
+  <p>
+    Zero is the dangerous one, because zero is a legitimate value in almost every
+    domain. It renders as a confident, plausible, correctly-formatted number, and
+    nothing downstream — no view, no test, no person glancing at a widget — can
+    tell it apart from the truth.
   </p>
 
   <p>
@@ -324,17 +330,21 @@ let query = HKStatisticsQuery(
   </p>
 
   <p>
-    One thing I've learned since publishing this: a locked device is not the
-    only way onto that failure path, and on a phone somebody is holding it isn't
-    the likeliest one. Permission that was never granted is invisible by design —
-    the page quoted above also says an app "isn’t aware when the user denies
-    permission to read data," so those reads come back empty. Permission that was
-    granted and then revoked in the Health app does not behave that way: those
-    reads fail. I watched four of them fail on a single cold launch, with the app
-    never having recorded a successful read at all. The guards above cover that
-    case without being asked to, which is the first time I've seen them work
-    anywhere but a test — nothing published zeros, and the widget went on showing
-    the numbers from the last good read.
+    One thing I've learned since publishing this: a locked device is not the only
+    way onto that failure path, and on a phone somebody is holding it isn't the
+    likeliest one. Permission that was
+    never granted is invisible by design — the page quoted above also says an app
+    "isn’t aware when the user denies permission to read data," so those reads
+    come back empty. Permission that was granted and then revoked in the Health
+    app does not behave that way: those reads fail.
+  </p>
+
+  <p>
+    I watched four of them fail on a single cold launch, with the app never having
+    recorded a successful read at all. The guards above covered that case without
+    being asked to, which is the first time I've seen them work anywhere but a
+    test. Nothing published zeros, and the widget went on showing the numbers from
+    the last good read.
   </p>
 
   <p>
@@ -342,30 +352,36 @@ let query = HKStatisticsQuery(
     than publishing a zero. That's too broad, and at the time my own code broke
     it deliberately: the per-day helpers behind the thirty-day history chart
     coerced a failed read to zero, on the grounds that a backfill would rather
-    draw one flat day than refuse to draw the month. The narrower rule is the one
-    worth carrying — <strong>a default is safe exactly when whatever consumes it
-    can tell "none" apart from "don't know."</strong> I thought a history chart
-    could: one flat day sits in thirty days of context and reads as the anomaly
-    it is. A single-number widget can't, because the number is the entire
-    interface and there is nothing beside it to disagree with. Same query, same
-    failure, opposite call — and what decides it isn't the data, it's what
-    renders it. A missing number makes a user tap; a wrong one makes them trust
-    it.
+    draw one flat day than refuse to draw the month.
+  </p>
+
+  <p>
+    The narrower rule is the one worth carrying — <strong>a default is safe
+    exactly when whatever consumes it can tell "none" apart from "don't
+    know."</strong> I thought a history chart could: one flat day sits in thirty
+    days of context and reads as the anomaly it is. A single-number widget can't,
+    because the number is the entire interface and there is nothing beside it to
+    disagree with. Same query, same failure, opposite call — and what decides it
+    isn't the data, it's what renders it. A missing number makes a user tap; a
+    wrong one makes them trust it.
   </p>
 
   <p>
     Those helpers are gone now, and how they went is a better argument for the
     rule than my exception to it was. Sixteen days after this was published, the
     week card on the main screen read "0/7 days hit" over a week that had been
-    7/7, with a weekly figure that was exactly the daily goal times seven — while
-    the live numbers on the same screen were correct. The single flat day I had
-    been picturing is a <em>partial</em> failure. The usual reason these reads
-    fail is a locked device, and a locked device fails all thirty days at once,
-    so what the chart actually gets is thirty well-formed zeros with no context
-    left to read them against. The backfill now abandons the whole load if any
-    one day fails. The rule held; I had checked it against the wrong failure. A
-    consumer can only tell "none" from "don't know" if the failures arrive one
-    at a time, and nothing guarantees they will.
+    7/7, with a weekly figure of exactly the daily goal times seven — while the
+    live numbers on the same screen were correct.
+  </p>
+
+  <p>
+    The single flat day I had been picturing is a <em>partial</em> failure. The
+    usual reason these reads fail is a locked device, and a locked device fails
+    all thirty days at once, so what the chart actually gets is thirty well-formed
+    zeros with no context left to read them against. The backfill now abandons the
+    whole load if any one day fails. The rule held; I had checked it against the
+    wrong failure. A consumer can only tell "none" from "don't know" if the
+    failures arrive one at a time, and nothing guarantees they will.
   </p>
 </article>
 <nav class="post-nav"><a href="/blog/">← All posts</a></nav>
