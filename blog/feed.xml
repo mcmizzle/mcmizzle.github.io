@@ -10,6 +10,13 @@
     <!-- ITEMS: newest first. Add each new post as the first <item>.
          pubDate must be RFC-822, e.g. Fri, 07 Aug 2026 12:00:00 +0000 -->
     <item>
+      <title>The CloudKit default zone can't list its records, and can't be reset</title>
+      <link>https://mcmizzle.com/blog/cloudkit-default-zone-limits/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/cloudkit-default-zone-limits/</guid>
+      <pubDate>Tue, 06 Oct 2026 12:00:00 +0000</pubDate>
+      <description>Field 'recordName' is not marked queryable, then AppDefaultZone does not support getChanges call, then a third problem nothing was ever going to report: Apple's documented recovery from an iCloud Keychain reset opens with "Delete the relevant zones", and the default zone is the one you can't. The console fix everyone recommends for the first error is per-environment, which makes it a release-checklist problem rather than a fix.</description>
+    </item>
+    <item>
       <title>An hourly HealthKit query returned all zeros, and the Health app had the data</title>
       <link>https://mcmizzle.com/blog/healthkit-collection-query-returns-zero/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/healthkit-collection-query-returns-zero/</guid>

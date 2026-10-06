@@ -7,6 +7,34 @@
     <language>en-us</language>
     <atom:link href="https://mcmizzle.com/blog/social.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title><![CDATA[The CloudKit default zone can't list its records, and can't be reset]]></title>
+      <link>https://mcmizzle.com/blog/cloudkit-default-zone-limits/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/cloudkit-default-zone-limits/</guid>
+      <pubDate>Tue, 06 Oct 2026 12:00:00 +0000</pubDate>
+      <description><![CDATA[I had written the recovery path for the worst thing that can happen to encrypted cloud data: the user resets the keychain holding the key, and everything stored under it becomes permanently unreadable. The code was named after the exact error. It pointed at a real API. It compiled, it reviewed fine, and it could never have run.
+
+Apple documents what to do in that situation, in three steps. The first is "delete the relevant zones." My data was in the default zone — the catch-all where every record lands if you don't say otherwise, including records from parts of the app with nothing to do with the recovery. Deleting that is either refused outright or far broader than the thing I was trying to do.
+
+The part worth sitting with is when I would have found out. That code runs on exactly one occasion: the day a user's data is already gone. No test reaches it, and the test harness you'd want can't exist in the usual form. So the first signal that the recovery didn't work would have been somebody's lost data staying lost, and nothing before that moment was going to look wrong.
+
+I found it by accident, while fixing two unrelated-looking errors that turned out to have the same cause.
+
+The general version: before you test whether a recovery path works, check that it can execute at all. Unreachable code that looks correct reads as coverage from every angle except the one nobody has from the inside — and recovery paths are where that is most likely, because they are the ones you cannot casually run.
+
+Full write-up, with both errors and the fix: https://mcmizzle.com/blog/cloudkit-default-zone-limits/]]></description>
+      <content:encoded><![CDATA[I had written the recovery path for the worst thing that can happen to encrypted cloud data: the user resets the keychain holding the key, and everything stored under it becomes permanently unreadable. The code was named after the exact error. It pointed at a real API. It compiled, it reviewed fine, and it could never have run.
+
+Apple documents what to do in that situation, in three steps. The first is "delete the relevant zones." My data was in the default zone — the catch-all where every record lands if you don't say otherwise, including records from parts of the app with nothing to do with the recovery. Deleting that is either refused outright or far broader than the thing I was trying to do.
+
+The part worth sitting with is when I would have found out. That code runs on exactly one occasion: the day a user's data is already gone. No test reaches it, and the test harness you'd want can't exist in the usual form. So the first signal that the recovery didn't work would have been somebody's lost data staying lost, and nothing before that moment was going to look wrong.
+
+I found it by accident, while fixing two unrelated-looking errors that turned out to have the same cause.
+
+The general version: before you test whether a recovery path works, check that it can execute at all. Unreachable code that looks correct reads as coverage from every angle except the one nobody has from the inside — and recovery paths are where that is most likely, because they are the ones you cannot casually run.
+
+Full write-up, with both errors and the fix: https://mcmizzle.com/blog/cloudkit-default-zone-limits/]]></content:encoded>
+    </item>
+    <item>
       <title><![CDATA[An hourly HealthKit query returned all zeros, and the Health app had the data]]></title>
       <link>https://mcmizzle.com/blog/healthkit-collection-query-returns-zero/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/healthkit-collection-query-returns-zero/</guid>

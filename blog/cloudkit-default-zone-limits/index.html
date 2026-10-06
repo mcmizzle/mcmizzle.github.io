@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The CloudKit default zone can't list its records, and can't be reset — McMizzle</title>
+<meta name="description" content="Two CloudKit errors with one cause: the private database's default zone. The usual fix for one breaks in production, and the other breaks recovery.">
+<link rel="canonical" href="https://mcmizzle.com/blog/cloudkit-default-zone-limits/">
+<link rel="alternate" type="application/rss+xml" title="McMizzle Blog" href="https://mcmizzle.com/blog/feed.xml">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf6ec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201a13">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://mcmizzle.com/blog/cloudkit-default-zone-limits/">
+<meta property="og:title" content="The CloudKit default zone can't list its records, and can't be reset — McMizzle">
+<meta property="og:description" content="Two CloudKit errors with one cause: the private database's default zone. The usual fix for one breaks in production, and the other breaks recovery.">
+<meta property="og:image" content="https://mcmizzle.com/assets/og-cloudkit-default-zone-limits.png">
+<meta property="article:published_time" content="2026-10-06">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
+<main>
+<article class="post">
+  <h1>The CloudKit default zone can't list its records, and can't be reset</h1>
+  <p class="post-meta">Kevin McMahon · October 6, 2026</p>
+
+  <p>
+    I had a small payload to move between two of my own devices — written on
+    one, read on the other, through the user's private CloudKit database. The
+    app is <a href="/ambientcast/">AmbientCast</a>, and this is CloudKit's most
+    ordinary use. Writing it worked the first time. Reading it failed on the
+    first real device I tried, with an error I had never seen:
+  </p>
+
+  <pre><code>Field 'recordName' is not marked queryable
+</code></pre>
+
+  <p>
+    Fixing that produced a second error that looked unrelated, and by the time
+    I had finished with that one I had found a third problem I was not looking
+    for and could not have been told about. All three had the same cause: every
+    record was sitting in the private database's default zone.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what's a CloudKit record zone?</summary>
+    <p>
+      CloudKit stores a user's data in databases, and each database is divided
+      into zones — think of them as partitions. Every database comes with one
+      zone already made, called the default zone, and if you save a record
+      without naming a zone that is where it lands. In a private database you
+      can also create zones of your own.
+    </p>
+  </details>
+
+  <h2>The fix every search result gives, and why I didn't take it</h2>
+
+  <p>
+    The read was a match-everything query — <code>NSPredicate(value: true)</code>
+    against a record type — and that needs CloudKit's own <code>recordName</code>
+    field indexed. A schema CloudKit inferred from your first write does not
+    index it.
+  </p>
+
+  <p>
+    Every answer to this error says the same thing, and the answers are right:
+    open CloudKit Console, add an index on that record type, mark
+    <code>recordName</code> queryable. It works.
+  </p>
+
+  <p>
+    It works in <em>development</em>. A CloudKit container has two schemas, one
+    per environment, and Apple <a href="https://developer.apple.com/documentation/cloudkit/encrypting-user-data">is explicit</a> that moving a change
+    between them is a step you take:
+  </p>
+
+  <blockquote>
+    <p>
+      Promote this schema change to your production environment before
+      deploying any app changes to the App Store that rely on the new schema.
+    </p>
+  </blockquote>
+
+  <p>
+    So the console fix turns a code problem into a release-checklist problem.
+    It produces a build that works on your desk and the identical error for
+    everyone else, at a moment chosen by whenever you happen to ship. I have
+    already been bitten once by a works-in-development-fails-in-production
+    split, in StoreKit, and the thing that makes those expensive is not the
+    failure — it is that the failure waits for the worst week to arrive.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what are development and production in CloudKit?</summary>
+    <p>
+      Your app's cloud container keeps two separate copies of its structure:
+      one that your Xcode builds talk to, and one that the version on the App
+      Store talks to. Changes you make to the first do not appear in the
+      second until you push them across deliberately. So a setting you changed
+      while testing is not a setting your users have.
+    </p>
+  </details>
+
+  <h2>So I stopped querying, and hit the next one</h2>
+
+  <p>
+    There is a way to list a zone's contents that runs no predicate and needs
+    no index. <code>recordZoneChanges(inZoneWith:since:)</code> asks the server
+    for a zone's change history, and passing <code>nil</code> for
+    <code>since</code> means "everything in here", which is exactly what a
+    device that has never fetched before wants.
+  </p>
+
+  <pre><code>// no predicate, no index, no schema state to keep in step
+let (modifications, _, _, moreComing) = try await database.recordZoneChanges(
+    inZoneWith: zoneID, since: nil
+)
+let records = modifications.values.compactMap { try? $0.get().record }
+// a zone big enough to batch sets moreComing, and you page with the
+// change token this is discarding. Mine holds a handful of records.
+</code></pre>
+
+  <p>On the device:</p>
+
+  <pre><code>AppDefaultZone does not support getChanges call
+</code></pre>
+
+  <p>
+    I had chosen a mechanism to dodge one limitation of the default zone
+    without checking whether the default zone supported the mechanism. Two
+    commits, twenty-four minutes, same mistake twice.
+  </p>
+
+  <p>
+    This one is documented, but not anywhere you would look while holding the
+    error. <code>CKRecordZone.Capabilities</code> has a member called
+    <a href="https://developer.apple.com/documentation/cloudkit/ckrecordzone/capabilities-swift.struct/fetchchanges"><code>fetchChanges</code></a>,
+    described as "A capability for fetching only the changed records from a
+    zone" — so the framework knows a zone may or may not have it, and neither
+    that page nor
+    <a href="https://developer.apple.com/documentation/cloudkit/ckfetchrecordzonechangesoperation"><code>CKFetchRecordZoneChangesOperation</code></a>
+    says which do. The page that does is
+    <a href="https://developer.apple.com/documentation/cloudkit/ckrecordzone/default()"><code>CKRecordZone.default()</code></a>,
+    which says the default zone "doesn’t have any special capabilities", then
+    names this one — "you can’t use a <code>CKFetchRecordChangesOperation</code>
+    object on records in the default zone". That operation was deprecated in
+    iOS 10. For its replacement the statement is only in Apple's documentation
+    archive, in the
+    <a href="https://developer.apple.com/library/archive/documentation/DataManagement/Conceptual/CloudKitWebServicesReference/ChangeRecords.html">request parameters of a web-services endpoint</a> that is
+    itself deprecated:
+  </p>
+
+  <blockquote>
+    <p>Fetching record changes is supported only for custom zones.</p>
+  </blockquote>
+
+  <h2>The third one had never run, and could not have</h2>
+
+  <p>
+    The payload was in an encrypted field, so while I was in there I read the
+    sibling function that handles a user resetting their iCloud Keychain. It
+    pointed a zone deletion at <code>CKRecordZone.default().zoneID</code>.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what are encrypted fields?</summary>
+    <p>
+      CloudKit will encrypt chosen fields of a record on the device before
+      sending them, using key material from the user's iCloud Keychain, so the
+      server stores bytes it cannot read. The trade is that if the user ever
+      resets that keychain, the key is gone and so is the data — nobody,
+      including Apple, can decrypt it.
+    </p>
+  </details>
+
+  <p>
+    That is not a hypothetical path. CloudKit reports it as a
+    <code>zoneNotFound</code> error carrying
+    <code>CKErrorUserDidResetEncryptedDataKey</code> in its
+    <code>userInfo</code>, and Apple
+    <a href="https://developer.apple.com/documentation/cloudkit/encrypting-user-data">documents
+    what your app should do about it</a> in three steps. The first is:
+  </p>
+
+  <blockquote>
+    <p>Delete the relevant zones.</p>
+  </blockquote>
+
+  <p>
+    You cannot do that in the default zone. It is the catch-all for every
+    record in the private database that did not name a zone, including records
+    belonging to parts of the app that have nothing to do with the feature
+    doing the recovering — so deleting it is either refused outright or far
+    broader than recovery, and neither of those is what the function was for.
+    <strong>If your encrypted records are in the default zone, you have no
+    recovery from a keychain reset, and the documented procedure's first
+    instruction is the one you can't follow.</strong>
+  </p>
+
+  <p>
+    What makes this the worst of the three is that nothing was ever going to
+    report it. That code runs on exactly one occasion — the day a user's data
+    is already unrecoverable — and no test reaches it either. On my Mac,
+    constructing a <code>CKContainer</code> for an identifier the host has no
+    matching entitlement for traps rather than throwing, so the test process
+    dies on the spot instead of one case failing. The recovery path was
+    unexercised, unexercisable and wrong, and the first signal would have been
+    somebody's lost data staying lost.
+  </p>
+
+  <h2>One custom zone, created before every write</h2>
+
+  <p>
+    All three go away in a custom zone, and the third is why it is not a
+    preference:
+  </p>
+
+  <pre><code>listing records   recordZoneChanges works, so no query and no index
+resetting it      a custom zone is deletable, so recovery can run
+environments      no schema setting, so dev and production behave alike
+</code></pre>
+
+  <p>
+    The zone is a couple of lines, and worth noticing is where the creation
+    call goes:
+  </p>
+
+  <pre><code>enum MyZone {
+    static var id: CKRecordZone.ID {
+        CKRecordZone.ID(zoneName: "MyZone", ownerName: CKCurrentUserDefaultName)
+    }
+
+    // Called before every write, not behind a "did I do this yet" flag.
+    static func ensure(in database: CKDatabase) async throws {
+        _ = try await database.modifyRecordZones(
+            saving: [CKRecordZone(zoneID: id)], deleting: []
+        )
+    }
+}
+</code></pre>
+
+  <p>
+    Saving a zone that already exists succeeds without changing it, so calling
+    it every time costs a round trip and buys the removal of a cache. A flag would be per-process
+    state about a server-side fact, and the recovery path above deletes the
+    zone — so the one sequence where the flag is wrong is the one where getting
+    it right matters.
+  </p>
+
+  <p>
+    Every record ID then has to name the zone, which is the part that catches
+    you out, because <code>CKRecord.ID(recordName:)</code> compiles perfectly
+    well and quietly means the default zone.
+  </p>
+
+  <h2>Encrypted fields can't be indexed, in any zone</h2>
+
+  <p>
+    A custom zone fixes listing. It does not fix sorting, and
+    <a href="https://developer.apple.com/documentation/cloudkit/encrypting-user-data">that limit</a> is worth knowing before you design a
+    record:
+  </p>
+
+  <blockquote>
+    <p>
+      The encrypted fields can’t have indexes because the server can’t read the
+      fields.
+    </p>
+  </blockquote>
+
+  <p>
+    That follows from what encryption is, and it is still easy to design past.
+    Anything you want the server to order or compare on has to stay in
+    plaintext. In my case that is the capture timestamp, deliberately left
+    unencrypted — when a payload was made discloses nothing — and the sort
+    moved to the client, which has to decrypt everything anyway. Where a record
+    is only ever fetched by ID the problem does not arise at all, which is its
+    own argument for designing the access pattern before the fields.
+  </p>
+
+  <h2>What I'd tell you to check first</h2>
+
+  <p>
+    <strong>If your private-database records are in the default zone, you have
+    no <code>fetchChanges</code> and no zone reset.</strong> Neither announces
+    itself while you are writing the code. The first shows up the day you need
+    to list records; the second shows up on the day you most need it to work,
+    once, to a user whose data has already gone.
+  </p>
+
+  <p>
+    <strong>Before testing whether a recovery path works, check it can
+    execute.</strong> Mine read as finished code — named for the error it
+    handles, pointed at a real API, no warnings — and the step it opened with
+    was impossible. A recovery that cannot run looks exactly like coverage from
+    every angle except the one nobody has from the inside.
+  </p>
+
+  <p>
+    And the one that cost two commits: <strong>when you pick a mechanism to
+    get around a platform limitation, check that the thing you are pointing it
+    at supports the mechanism.</strong> I swapped one restriction of the default
+    zone for another one of the default zone's, and only noticed because a real
+    device said so. That is the other half of it: both of these are the server
+    refusing a request, so the only place they exist at all is against a live
+    container with an account signed in to it.
+  </p>
+</article>
+<nav class="post-nav"><a href="/blog/">← All posts</a></nav>
+</main>
+<footer>
+  <nav class="footer-links">
+    <a href="/about/">About</a> &middot;
+    <a href="/blog/">Blog</a> &middot;
+    <a href="/printing/">3D printing</a> &middot;
+    <a href="/support/">Support</a> &middot;
+    <a href="/privacy/">Privacy</a> &middot;
+    <a href="/blog/feed.xml">RSS</a> &middot;
+    <a href="https://www.linkedin.com/in/mcmizzle">LinkedIn</a>
+  </nav>
+  <p class="footer-legal">&copy; 2026 Kevin McMahon (McMizzle)</p>
+</footer>
+</body>
+</html>
