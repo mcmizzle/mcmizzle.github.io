@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Help test AmbientCast — McMizzle</title>
+<meta name="description" content="AmbientCast is developed against two Bambu Lab printers. If you own an A1, A1 mini, A2L or an AMS HT, you can help.">
+<link rel="canonical" href="https://mcmizzle.com/testing/">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf6ec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201a13">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mcmizzle.com/testing/">
+<meta property="og:title" content="Help test AmbientCast — McMizzle">
+<meta property="og:description" content="AmbientCast is developed against two Bambu Lab printers. If you own an A1, A1 mini, A2L or an AMS HT, you can help.">
+<meta property="og:image" content="https://mcmizzle.com/assets/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
+<main>
+  <h1>Help test AmbientCast</h1>
+  <p class="tagline">Two printers built this app. Yours might be the third.</p>
+
+  <p>
+    AmbientCast is written and tested against exactly two machines — a P2S and
+    an H2C, both in one house. Everything the app knows about every other
+    Bambu Lab printer is inferred from documentation, from other people's
+    code, and from what users report. Most of the time that is enough. When it
+    isn't, the app fails on hardware nobody here can switch on.
+  </p>
+
+  <h2>What would help most</h2>
+  <p>
+    If you own one of these, there is a specific open question attached to it:
+  </p>
+  <ul>
+    <li>
+      <strong>A1 or A1 mini</strong> — automatic discovery finds the H2D, H2S
+      and P2S and does not find these. Nobody here can see why.
+    </li>
+    <li>
+      <strong>A2L</strong> — one report of a manual add failing where other
+      apps connect fine. A fix shipped in September that has never been
+      confirmed against the machine that reported it.
+    </li>
+    <li>
+      <strong>A2L running an AMS and an AMS Lite together</strong> — the app's
+      model of filament slots has never seen two different unit types at once.
+    </li>
+    <li>
+      <strong>AMS HT</strong> — supported entirely on the strength of
+      documentation. No report from a real one has ever been read.
+    </li>
+  </ul>
+
+  <h2>What helping looks like</h2>
+  <p>
+    Low effort, and not a commitment. Email
+    <a href="mailto:support@mcmizzle.com?subject=AmbientCast%20hardware%20testing">support@mcmizzle.com</a>
+    saying which machine you have. Useful things, in rough order:
+  </p>
+  <ul>
+    <li>Whether the app finds your printer automatically, and whether adding
+      it by hand works.</li>
+    <li>A screenshot of anything that looks wrong — a filament row with the
+      wrong slots, a status that contradicts the printer's own screen.</li>
+    <li>On iPhone or iPad, AmbientCast can export a diagnostics bundle from
+      Settings. It redacts access codes and camera passwords before you see
+      it, and you can read the whole thing before deciding to send it.</li>
+  </ul>
+
+  <p>
+    No account, no sign-up, nothing installed beyond the app itself — which is
+    free, and has no paid tier to upsell you to. If you would rather just
+    report the bug and move on, that is
+    <a href="/support/">support</a>, and it is equally welcome.
+  </p>
+
+  <p>
+    Fixes that come out of this get written up in the open: every issue
+    mentioned above is a real one, tracked with the measurements that produced
+    it.
+  </p>
+</main>
+<footer>
+  <nav class="footer-links">
+    <a href="/about/">About</a> &middot;
+    <a href="/blog/">Blog</a> &middot;
+    <a href="/printing/">3D printing</a> &middot;
+    <a href="/support/">Support</a> &middot;
+    <a href="/privacy/">Privacy</a> &middot;
+    <a href="/blog/feed.xml">RSS</a> &middot;
+    <a href="https://www.linkedin.com/in/mcmizzle">LinkedIn</a>
+  </nav>
+  <p class="footer-legal">&copy; 2026 Kevin McMahon (McMizzle)</p>
+</footer>
+</body>
+</html>
