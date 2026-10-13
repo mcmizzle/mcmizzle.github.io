@@ -36,6 +36,19 @@
   <!-- POST LIST: newest first. Add each new post as the first <li>. -->
   <ul class="post-list">
     <li>
+      <p class="post-meta">October 13, 2026</p>
+      <span class="post-title"><a href="/blog/tvos-scrollview-wont-scroll/">A tvOS ScrollView with one focusable view won't scroll</a></span>
+      <p class="post-summary">
+        A settings pane was taller than the screen and the remote would not
+        move it. On tvOS a scroll view scrolls by moving focus, so one
+        focusable view is as stuck as none &mdash; and putting
+        <code>.focusable()</code> on the container, which looks like the fix,
+        is what causes it. One pane's scrollability depended on StoreKit
+        returning products, and a sweep of screenshots passed one of them
+        outright.
+      </p>
+    </li>
+    <li>
       <p class="post-meta">October 6, 2026</p>
       <span class="post-title"><a href="/blog/cloudkit-default-zone-limits/">The CloudKit default zone can't list its records, and can't be reset</a></span>
       <p class="post-summary">

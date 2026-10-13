@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A tvOS ScrollView with one focusable view won't scroll — McMizzle</title>
+<meta name="description" content="On tvOS a ScrollView scrolls by moving focus. One focusable view is as stuck as none, and a screenshot cannot tell you which you have.">
+<link rel="canonical" href="https://mcmizzle.com/blog/tvos-scrollview-wont-scroll/">
+<link rel="alternate" type="application/rss+xml" title="McMizzle Blog" href="https://mcmizzle.com/blog/feed.xml">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf6ec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201a13">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://mcmizzle.com/blog/tvos-scrollview-wont-scroll/">
+<meta property="og:title" content="A tvOS ScrollView with one focusable view won't scroll — McMizzle">
+<meta property="og:description" content="On tvOS a ScrollView scrolls by moving focus. One focusable view is as stuck as none, and a screenshot cannot tell you which you have.">
+<meta property="og:image" content="https://mcmizzle.com/assets/og-tvos-scrollview-wont-scroll.png">
+<meta property="article:published_time" content="2026-10-13">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
+<main>
+<article class="post">
+  <h1>A tvOS ScrollView with one focusable view won't scroll</h1>
+  <p class="post-meta">Kevin McMahon · October 13, 2026</p>
+
+  <p>
+    A settings pane in my tvOS app had a paragraph of explanatory text, and on
+    the television the bottom of it was off the screen. Pressing down on the
+    remote did nothing. Not a slow scroll, not a rubber-band — the view did not
+    move at all. The content was taller than the viewport, it was inside a
+    <code>ScrollView</code>, and the same code scrolls fine on iOS.
+  </p>
+
+  <p>
+    It read as a layout bug, so that is where I looked first. It is not one.
+    <strong>On tvOS a <code>ScrollView</code> scrolls by moving focus</strong>,
+    and that pane had exactly one thing focus could land on.
+  </p>
+
+  <h2>One target is as stuck as none</h2>
+
+  <p>
+    I already knew the zero case. An earlier bug in the same app
+    (<a href="/ambientcast/">AmbientCast</a>, a tvOS app for watching a 3D
+    printer's camera) had a first-run screen whose content grew past the fold at
+    large text sizes, with nothing focusable in the scroll region. The note I
+    wrote at the time said a <code>ScrollView</code> with nothing focusable in it
+    cannot be scrolled, which was right.
+  </p>
+
+  <p>
+    What I had not worked out is that <em>one</em> is the same as none. The focus
+    engine moves focus between candidates; a scroll is the side effect of
+    reaching a candidate that is off screen. With a single target, the d-pad has
+    nowhere to go, so nothing is ever revealed and the view never budges.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what's the focus engine?</summary>
+    <p>
+      An Apple TV has no touchscreen and no pointer. Instead the system tracks
+      one highlighted item at a time, and the remote moves that highlight
+      around. The component deciding where the highlight goes next is the focus
+      engine. If it cannot find somewhere to move, pressing
+      the remote does nothing at all.
+    </p>
+  </details>
+
+  <p>
+    This is written down, just not where a SwiftUI developer would meet it.
+    UIKit has a protocol called
+    <a href="https://developer.apple.com/documentation/uikit/uifocusitemscrollablecontainer"><code>UIFocusItemScrollableContainer</code></a>,
+    described as:
+  </p>
+
+  <blockquote>
+    <p>A type of focus item container that supports automatic scrolling of focusable content.</p>
+    <p>The focus engine scrolls the container to keep items onscreen as they become focused.</p>
+  </blockquote>
+
+  <p>
+    Every word of the mechanism is in there — <em>focusable content</em>, and
+    scrolling to keep items onscreen <em>as they become focused</em>. SwiftUI's
+    own <code>ScrollView</code> documentation talks about platform-appropriate
+    scroll gestures, which is true and no help here. You can write SwiftUI for
+    years without meeting the protocol that explains your bug.
+  </p>
+
+  <h2>The modifier that looks like the fix</h2>
+
+  <p>
+    Knowing the zero case, I had already "fixed" this pane once, by putting
+    <code>.focusable(true)</code> on the <code>VStack</code> wrapping the
+    content. That satisfies the rule as I had written it: something in the
+    scroll region takes focus. It also makes the entire pane a single target,
+    which is the bug.
+  </p>
+
+<pre><code>// Looks like it obeys the rule. One target, so it cannot scroll.
+ScrollView {
+    VStack(alignment: .leading, spacing: 16) {
+        Text(title)
+        Text(intro)
+        ForEach(points, id: \.self) { Text($0) }
+    }
+    .focusable(true)
+}
+
+// Scrolls. Focus has somewhere to move, and the scroll follows it.
+ScrollView {
+    VStack(alignment: .leading, spacing: 16) {
+        Text(title).focusable(true)
+        Text(intro).focusable(true)
+        ForEach(points, id: \.self) { Text($0).focusable(true) }
+    }
+}
+</code></pre>
+
+  <p>
+    That is the whole fix, and it is why the bug survives review. The two
+    versions differ by where one modifier sits. One of them scrolls.
+  </p>
+
+  <p>
+    The honest cost: each of those rows now takes a focus ring when the d-pad
+    lands on it, so prose picks up highlighting that prose does not normally
+    have. That ring is also the only feedback telling a viewer the remote did
+    something, so I left it alone.
+  </p>
+
+  <h2>Count the targets in the pane's emptiest state</h2>
+
+  <p>
+    The next pane I checked had <em>zero</em>. Its explanatory block carried a
+    comment I had written saying it was deliberately not focusable, because
+    there was nothing to activate and focus would only be a dead stop on the way
+    past. That reasoning is backwards for a tvOS scroll view, where the dead
+    stop is the mechanism rather than a cost.
+  </p>
+
+  <p>
+    The only other focus candidates in it were in-app purchase buttons, and
+    those exist only when StoreKit has returned products to display.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what's StoreKit?</summary>
+    <p>
+      Apple's framework for in-app purchases. An app asks it for the products
+      it sells and gets back prices and names to display. The request goes to
+      Apple's servers, so it can be slow, and it can come back empty — offline,
+      or on a build installed without a store configuration.
+    </p>
+  </details>
+
+  <p>
+    So on any launch where that request was slow, offline, or made from a
+    development install, the buttons were absent and the pane had no focus
+    targets at all. Whether the pane carrying the app's privacy policy could be
+    scrolled depended on a purchase API answering.
+  </p>
+
+  <p>
+    That is the question worth asking, and it is not "is this focusable." It is
+    <strong>how many focus targets does this scroll view have in its emptiest
+    state</strong> — with no products, no history, no content loaded. Zero and
+    one both mean stuck. The count is greppable; the behavior is not.
+  </p>
+
+  <h2>Scrolling back up needs a target above</h2>
+
+  <p>
+    The third pane taught me the rule is sharper still, and my first fix for it
+    was wrong in a useful way.
+  </p>
+
+  <p>
+    That screen has a title, a sentence saying what the app is, then three
+    requirement rows. I made the three rows individually focusable, which is the
+    fix above, and the remote could now walk down the list with the scroll
+    following. It looked done.
+  </p>
+
+  <p>
+    Then I pressed up on the device and could not get back to the title. A scroll
+    view only ever scrolls to reveal a view that <em>takes focus</em>, and the
+    title sits above the topmost focusable row. Press up from the first row and
+    there is nothing to move to, so once large text had pushed the title off the
+    top it was gone for good.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what is Large Text?</summary>
+    <p>
+      An accessibility setting that makes every label in every app bigger, so
+      someone who finds the default hard to read can still use the device. Apps
+      are supposed to reflow to accommodate it. The practical effect for a
+      developer is that any screen's content can get much taller than it was
+      when you designed it.
+    </p>
+  </details>
+
+  <p>
+    So: <strong>anything that has to be readable must be a focus target itself,
+    or sit below one.</strong> Making the title and the description focusable
+    took that screen to five targets and up walks back to the top.
+  </p>
+
+  <p>
+    It also explained a failed experiment from weeks earlier. I had tried
+    <code>prefersDefaultFocus</code> inside a <code>focusScope</code> to stop
+    the focus engine from grabbing the content block at launch, and the output
+    was pixel-identical. The problem was never which view focus starts on.
+  </p>
+
+  <h2>A screenshot cannot see any of this</h2>
+
+  <p>
+    This is the part that cost the most. I had swept every screen in the app at
+    the largest accessibility text size, rendering each one and looking at it.
+    That sweep <em>passed</em> the first of these panes outright, and later
+    passed a fix for the third that was still broken.
+  </p>
+
+  <p>
+    A render tells you where the fold is. It does not tell you whether you can
+    get past it. "Visible at launch" and "reachable" are different claims, and
+    only a remote separates them — which is exactly the instrument a headless
+    build does not have. The sweep was not sloppy; it was answering a question
+    that could not reveal the defect.
+  </p>
+
+  <p>
+    What works instead is counting. Walk each scroll view, count the descendants
+    that can take focus, and ask what the count is with every optional piece of
+    content missing. Two of mine came out at one and zero.
+  </p>
+
+  <h2>What I'd tell you to check first</h2>
+
+  <p>
+    If a tvOS <code>ScrollView</code> will not move:
+  </p>
+
+  <ul>
+    <li><strong>Count the focusable descendants.</strong> Zero and one are both
+      stuck. This is the whole bug, most of the time.</li>
+    <li><strong>Check where <code>.focusable()</code> sits.</strong> On the
+      container it collapses the content to one target and looks like a fix.
+      It belongs on the rows.</li>
+    <li><strong>Count again with the optional content gone.</strong> If your
+      only targets are buttons behind a network call, a purchase, or a
+      non-empty list, the pane is unscrollable whenever that comes back
+      empty.</li>
+    <li><strong>Check you can scroll back.</strong> Anything above the topmost
+      focusable view is unreachable once it is off screen.</li>
+    <li><strong>Don't trust a screenshot.</strong> Rendering at a big text size
+      shows you overflow, not reachability. Press the d-pad.</li>
+  </ul>
+
+  <p>
+    The general version, and the reason I had this bug twice: a rule written
+    from one failing case tends to encode that case rather than the mechanism.
+    "Make something focusable" was a true description of the fix for an empty
+    scroll view and a wrong description of why it worked. The mechanism is that
+    scrolling is a side effect of focus moving, and everything above follows
+    from it in a line.
+  </p>
+
+  <p>
+    Someone reported the one-target version of this
+    <a href="https://developer.apple.com/forums/thread/748689">on the Apple
+    Developer Forums</a> in March 2024 — a <code>ScrollView</code> holding one long
+    <code>Text</code> with <code>.focusable()</code> on it, scrolling in the
+    Xcode preview and refusing to move on the device. Another developer
+    confirmed it in March 2025, a third posted a <code>UITextView</code>
+    workaround that August, and nobody has said why it happens.
+  </p>
+
+  <p>
+    The one-target case was still unscrollable for me on an Apple TV 4K (3rd
+    generation) running tvOS 27; the app builds back to tvOS 17.
+  </p>
+</article>
+<nav class="post-nav"><a href="/blog/">← All posts</a></nav>
+</main>
+<footer>
+  <nav class="footer-links">
+    <a href="/about/">About</a> &middot;
+    <a href="/blog/">Blog</a> &middot;
+    <a href="/printing/">3D printing</a> &middot;
+    <a href="/support/">Support</a> &middot;
+    <a href="/privacy/">Privacy</a> &middot;
+    <a href="/blog/feed.xml">RSS</a> &middot;
+    <a href="https://www.linkedin.com/in/mcmizzle">LinkedIn</a>
+  </nav>
+  <p class="footer-legal">&copy; 2026 Kevin McMahon (McMizzle)</p>
+</footer>
+</body>
+</html>

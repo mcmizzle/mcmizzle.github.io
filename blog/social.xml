@@ -7,6 +7,38 @@
     <language>en-us</language>
     <atom:link href="https://mcmizzle.com/blog/social.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title><![CDATA[A tvOS ScrollView with one focusable view won't scroll]]></title>
+      <link>https://mcmizzle.com/blog/tvos-scrollview-wont-scroll/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/tvos-scrollview-wont-scroll/</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 +0000</pubDate>
+      <description><![CDATA[A settings pane in my Apple TV app was taller than the screen, and pressing down on the remote did nothing at all. Not a slow scroll. No movement. The content was clearly too tall, it was clearly inside a scroll view, and the identical code scrolls on iPhone.
+
+The explanation is one sentence: on an Apple TV, scrolling is a side effect of the highlight moving. There is no finger on the glass. The system keeps one item highlighted, the remote moves that highlight, and the view scrolls to bring it into view. Nothing highlightable means nothing to move to, so nothing scrolls.
+
+What cost me the most is that one highlightable item behaves exactly like none. I had already worked out the empty case, and "fixed" this pane by making the whole block highlightable — one target, nowhere to move, same stuck screen. That fix reads as correct in review: it differs from the broken version by where a single line sits.
+
+Then two more. One pane's only highlightable items were purchase buttons, which exist only once Apple's store API has returned products, so whether the screen carrying the privacy policy could scroll depended on a network call. Another let me walk down the list and never back up to the title.
+
+I had rendered every screen at the largest accessibility text size and looked at the pictures. The sweep passed the first of these panes, and later passed a broken fix for the third. A screenshot shows where content gets cut off; it cannot show whether a person can get past that point.
+
+The takeaway I'd keep: when you write a rule from one failing example, you tend to encode the example instead of the mechanism.
+
+Full write-up, with the code and the two traps: https://mcmizzle.com/blog/tvos-scrollview-wont-scroll/]]></description>
+      <content:encoded><![CDATA[A settings pane in my Apple TV app was taller than the screen, and pressing down on the remote did nothing at all. Not a slow scroll. No movement. The content was clearly too tall, it was clearly inside a scroll view, and the identical code scrolls on iPhone.
+
+The explanation is one sentence: on an Apple TV, scrolling is a side effect of the highlight moving. There is no finger on the glass. The system keeps one item highlighted, the remote moves that highlight, and the view scrolls to bring it into view. Nothing highlightable means nothing to move to, so nothing scrolls.
+
+What cost me the most is that one highlightable item behaves exactly like none. I had already worked out the empty case, and "fixed" this pane by making the whole block highlightable — one target, nowhere to move, same stuck screen. That fix reads as correct in review: it differs from the broken version by where a single line sits.
+
+Then two more. One pane's only highlightable items were purchase buttons, which exist only once Apple's store API has returned products, so whether the screen carrying the privacy policy could scroll depended on a network call. Another let me walk down the list and never back up to the title.
+
+I had rendered every screen at the largest accessibility text size and looked at the pictures. The sweep passed the first of these panes, and later passed a broken fix for the third. A screenshot shows where content gets cut off; it cannot show whether a person can get past that point.
+
+The takeaway I'd keep: when you write a rule from one failing example, you tend to encode the example instead of the mechanism.
+
+Full write-up, with the code and the two traps: https://mcmizzle.com/blog/tvos-scrollview-wont-scroll/]]></content:encoded>
+    </item>
+    <item>
       <title><![CDATA[The CloudKit default zone can't list its records, and can't be reset]]></title>
       <link>https://mcmizzle.com/blog/cloudkit-default-zone-limits/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/cloudkit-default-zone-limits/</guid>
