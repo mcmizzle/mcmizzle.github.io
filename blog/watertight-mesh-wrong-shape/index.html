@@ -213,7 +213,7 @@ out.append((p[0] + bx * d / cosh, p[1] + by * d / cosh))
   </p>
 
   <p>
-    In practice: rasterise the polygon, run a Euclidean distance transform,
+    In practice: rasterize the polygon, run a Euclidean distance transform,
     subtract <code>d</code>, take the zero contour with marching squares.
     Against a circle, where the exact answer is known, r=40 eroded by 5 comes
     back between 35.003 and 35.025 against a true 35.000. Against the real

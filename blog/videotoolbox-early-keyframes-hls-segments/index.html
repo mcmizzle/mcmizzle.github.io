@@ -142,16 +142,21 @@ if isKeyframe &amp;&amp; elapsed &gt;= targetDuration - keyframeArrivalTolerance
 
   <p>
     Its discussion adds that the default is 0, meaning no limit, that it is
-    useful when the frame rate is variable, that it can be combined with the
-    frame-count version — and then, in a single cross-reference,
-    <em>"See <code>kVTCompressionPropertyKey_MaxKeyFrameInterval</code> for
-    more discussion of key frames."</em>
+    useful when the frame rate is variable, and that it can be set in
+    conjunction with a key that
+    <em>"requires a keyframe every <code>X</code> frames or every
+    <code>Y</code> seconds, whichever comes first"</em> — and then, in a single
+    cross-reference, <em>"See
+    <code>kVTCompressionPropertyKey_MaxKeyFrameIntervalDuration</code> for more
+    discussion of key frames."</em>
   </p>
 
   <p>
-    That link is where the answer was. The
-    <a href="https://developer.apple.com/documentation/videotoolbox/kvtcompressionpropertykey_maxkeyframeinterval">frame-count property's page</a>
-    says:
+    Which is the oddity I missed: both of those links point back at the page you
+    are already on. The property being described — the one that counts frames —
+    is reachable from here only under See Also, and
+    <a href="https://developer.apple.com/documentation/videotoolbox/kvtcompressionpropertykey_maxkeyframeinterval">its page</a>
+    is where the answer was:
   </p>
 
   <blockquote>
@@ -162,11 +167,29 @@ if isKeyframe &amp;&amp; elapsed &gt;= targetDuration - keyframeArrivalTolerance
   </blockquote>
 
   <p>
-    So the behavior is documented — on a page about a different property, in a
-    paragraph you reach by following a one-line "for more discussion" pointer
-    from the page you were actually reading. I had read the page for the
-    property I was setting, decided it told me what I needed, and not followed
-    the link.
+    So the behavior is documented — on a page about a different property, one
+    See Also entry away from the page you were actually reading. I had read the
+    page for the property I was setting, decided it told me what I needed, and
+    never gone looking for the other one.
+  </p>
+
+  <p>
+    One correction, since this was published. I originally quoted that
+    cross-reference as naming
+    <code>kVTCompressionPropertyKey_MaxKeyFrameInterval</code>, the frame-count
+    property, and said the answer was one link away. That is clearly what Apple
+    meant — the frame-count page is the one carrying the discussion of key
+    frames, and a key cannot be set in conjunction with itself — but it is not
+    what the page renders.
+  </p>
+
+  <p>
+    Nor can I put it down to a later edit. The only Internet Archive capture of
+    the JSON behind the page, taken 9 June 2025, already resolves both links to
+    <code>MaxKeyFrameIntervalDuration</code> — fourteen months before this post
+    went up. So the page probably read this way when I wrote it, and I typed the
+    name I expected. The sentence I was pointing at is still on the frame-count
+    page, verbatim; the route I gave you was the wrong part.
   </p>
 
   <p>
