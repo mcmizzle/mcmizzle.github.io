@@ -36,6 +36,19 @@
   <!-- POST LIST: newest first. Add each new post as the first <li>. -->
   <ul class="post-list">
     <li>
+      <p class="post-meta">October 20, 2026</p>
+      <span class="post-title"><a href="/blog/nwconnection-connection-refused-waiting/">NWConnection reports a refused connection as waiting, not failed</a></span>
+      <p class="post-summary">
+        A diagnostics export showed ten identical connection attempts, each
+        about eight seconds long, each blaming a network that provably
+        worked. The
+        refusal had arrived instantly &mdash; Network.framework just files
+        <code>ECONNREFUSED</code> under <code>.waiting</code>, where the
+        documentation says the error is not fatal, so my own timeout spent
+        eight seconds a try on a question already settled.
+      </p>
+    </li>
+    <li>
       <p class="post-meta">October 13, 2026</p>
       <span class="post-title"><a href="/blog/tvos-scrollview-wont-scroll/">A tvOS ScrollView with one focusable view won't scroll</a></span>
       <p class="post-summary">

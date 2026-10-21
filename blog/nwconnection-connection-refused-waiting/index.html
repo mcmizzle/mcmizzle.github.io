@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NWConnection reports a refused connection as waiting, not failed — McMizzle</title>
+<meta name="description" content="A closed port answers instantly. Network.framework files that under .waiting, so my connect timeout spent eight seconds on a question already settled.">
+<link rel="canonical" href="https://mcmizzle.com/blog/nwconnection-connection-refused-waiting/">
+<link rel="alternate" type="application/rss+xml" title="McMizzle Blog" href="https://mcmizzle.com/blog/feed.xml">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf6ec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201a13">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://mcmizzle.com/blog/nwconnection-connection-refused-waiting/">
+<meta property="og:title" content="NWConnection reports a refused connection as waiting, not failed — McMizzle">
+<meta property="og:description" content="A closed port answers instantly. Network.framework files that under .waiting, so my connect timeout spent eight seconds on a question already settled.">
+<meta property="og:image" content="https://mcmizzle.com/assets/og-nwconnection-connection-refused-waiting.png">
+<meta property="article:published_time" content="2026-10-20">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
+<main>
+<article class="post">
+  <h1>NWConnection reports a refused connection as waiting, not failed</h1>
+  <p class="post-meta">Kevin McMahon · October 20, 2026</p>
+
+  <p>
+    A user wrote in because the camera view in my tvOS app
+    (<a href="/ambientcast/">AmbientCast</a>, which puts a 3D printer's camera
+    on a television) sat at "Connecting…" and never moved. He attached a
+    diagnostics export, and every connection attempt in it read the same:
+  </p>
+
+<pre><code>rtsp: session ended after 8.2s -- never reached PLAY
+      (connectionFailed("Timed out waiting for network path")) -- reconnecting in 3s
+</code></pre>
+
+  <p>
+    Ten of them, 8.1 to 8.3 seconds each. His network was not the problem: the
+    same app held an MQTT connection to the same printer, at the same address,
+    in the same second. The message blamed the one thing that provably worked.
+  </p>
+
+  <h2>The timeout was mine</h2>
+
+  <p>
+    That 8.1-to-8.3-second spread is not a duration the network chose. It is my
+    own fixed eight-second connect timeout firing, every attempt. The string
+    describes the mechanism of my waiting rather than anything that failed, and
+    it reads as a verdict on the user's Wi-Fi. He went and checked his Wi-Fi.
+  </p>
+
+  <p>
+    The real reason was one state transition away, in a place he could not get
+    at.
+  </p>
+
+<pre><code>case .waiting(let error):
+    logger.notice("connection waiting: \(error.localizedDescription)")
+</code></pre>
+
+  <p>
+    That <code>error</code> is the real <code>NWError</code> — refused,
+    unreachable, a TLS handshake that never completes — and <code>logger</code>
+    is os_log. The app's exportable diagnostics file never saw it, and on a
+    physical Apple TV there is no command-line route to os_log at all. Failures
+    with entirely different fixes were all printing one sentence.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what's os_log?</summary>
+    <p>
+      Apple's system logging facility. It is fast and structured, and it is
+      the right place for an app's chatter — but the log lives on the device
+      and you need a Mac attached, or a tool that can reach the device, to
+      read it back. A log file the app writes itself is worse technology and
+      can be emailed to you by a stranger.
+    </p>
+  </details>
+
+  <p>
+    Writing that line into the exported file as well took one commit. The next
+    log off hardware said this:
+  </p>
+
+<pre><code>16:08:57Z rtsp: waiting for &lt;printer&gt;:322 -- Network.NWError error 61 - Connection refused
+16:09:05Z rtsp: session ended after 8.2s -- never reached PLAY ... -- reconnecting in 3s
+</code></pre>
+
+  <p>
+    The answer arrives at <code>:57</code>. I give up at <code>:05</code>.
+  </p>
+
+  <h2>A refusal is an answer, and Network.framework does not call it a failure</h2>
+
+  <p>
+    POSIX 61 is <code>ECONNREFUSED</code>, which is as final as a network answer
+    gets. Network.framework delivers it as <code>.waiting(NWError)</code> rather
+    than <code>.failed(NWError)</code>, and
+    <a href="https://developer.apple.com/documentation/network/nwconnection/state-swift.enum/waiting(_:)">Apple's
+    documentation for that case</a> is explicit about what it means:
+  </p>
+
+  <blockquote>
+    <p>The connection is waiting for a network path change.</p>
+    <p>Connections that are waiting will indicate the reason that the connection couldn’t be established in the associated error. These errors are not fatal.</p>
+  </blockquote>
+
+  <details class="eli5">
+    <summary>ELI5: what does "connection refused" mean?</summary>
+    <p>
+      The machine you dialed is switched on, reachable, and listening to you —
+      it just has nothing running on the port you asked for, so it immediately
+      says no. That is different from a timeout, where nothing answers at all
+      and you cannot tell whether the host is off, firewalled, or simply slow.
+      A refusal takes microseconds; a timeout takes as long as you are willing
+      to wait.
+    </p>
+  </details>
+
+  <p>
+    For this error, "not fatal" is wrong in the only sense that matters to the
+    caller. The host received the connection and sent back a reset because
+    nothing is listening on that port. There is no network path change coming
+    that will fix it, and no amount of waiting inside the same attempt will
+    improve the answer.
+  </p>
+
+  <h2>The patience is right most of the time, which is why it survives</h2>
+
+  <p>
+    <code>.waiting</code> is not a mistake in general. It is exactly what an
+    <code>NWConnection</code> reports while Wi-Fi and DNS settle after the
+    device wakes, and on iOS and macOS while the Local Network permission
+    prompt is still unanswered. (tvOS has no such prompt:
+    <a href="https://developer.apple.com/documentation/technotes/tn3179-understanding-local-network-privacy">Apple's
+    technote on local network privacy</a> lists it as unsupported there.) In
+    both of those the connection really does reach <code>.ready</code> on its
+    own, with no help from me.
+  </p>
+
+  <p>
+    So the state is doing two jobs. One of them is "hold on, this may come
+    good," and the other is "the host has told you no." They arrive through the
+    same case, and only the associated error tells them apart.
+  </p>
+
+  <h2>Triage the error yourself</h2>
+
+  <p>
+    The split that matters is whether a host demonstrably answered. If it did,
+    the attempt is over. If the complaint is about a path that is not there
+    <em>yet</em>, patience is the whole point of the state and should be left
+    alone.
+  </p>
+
+<pre><code>/// Whether a `.waiting` reason is a final answer rather than a
+/// condition that may clear on its own.
+func isTerminal(_ error: NWError) -&gt; Bool {
+    guard case .posix(let code) = error else { return false }
+    switch code {
+    // A host answered. Nothing is pending.
+    case .ECONNREFUSED, .ECONNRESET:
+        return true
+    // No answer, but the path is there: the host itself is not
+    // responding, and no path change will fix that.
+    case .EHOSTDOWN:
+        return true
+    // Deliberately absent: .EHOSTUNREACH, .ENETUNREACH, .ENETDOWN.
+    // Those describe a path that isn't there yet, which is the case
+    // the patient behavior exists for.
+    default:
+        return false
+    }
+}
+</code></pre>
+
+  <p>
+    Wiring it into the state handler is four lines, and the ordering is
+    load-bearing: log first, decide second, and only then touch the
+    continuation.
+  </p>
+
+<pre><code>// State updates arrive serially on the queue passed to start(queue:),
+// so this flag is never touched concurrently.
+nonisolated(unsafe) var resumed = false
+
+connection.stateUpdateHandler = { state in
+    switch state {
+    case .ready:
+        guard !resumed else { return }
+        resumed = true
+        continuation.resume()
+
+    case .failed(let error):
+        guard !resumed else { return }
+        resumed = true
+        continuation.resume(throwing: error)
+
+    case .waiting(let error):
+        writeToExportableLog("waiting: \(error)")   // the entire diagnosis
+        guard isTerminal(error) else { return }     // may still come good
+        guard !resumed else { return }
+        resumed = true
+        connection.cancel()
+        continuation.resume(throwing: error)
+
+    default:
+        break
+    }
+}
+</code></pre>
+
+  <details class="eli5">
+    <summary>ELI5: what's a continuation?</summary>
+    <p>
+      A bridge between old-style callback code and Swift's
+      <code>async</code>/<code>await</code>. You suspend the awaiting function,
+      hand out a token, and whoever holds the token resumes it later with a
+      result. The rule is that it must be resumed exactly once — never twice,
+      and never not at all.
+    </p>
+  </details>
+
+  <p>
+    Both <code>guard</code>s earn their place. <code>.waiting</code> fires
+    repeatedly while <code>NWConnection</code> retries on its own, so a bare
+    <code>continuation.resume</code> in that case traps the second time through
+    with a continuation misuse. And the <code>cancel()</code> matters because
+    throwing out of the <code>await</code> does not stop the connection; left
+    alone it keeps retrying on its queue behind you.
+  </p>
+
+  <p>
+    Measured on the tvOS 27 simulator against a refused port, same scenario
+    before and after:
+  </p>
+
+<pre><code>session ended after 8.1s   -&gt;   session ended after 0.0s
+guidance appears in ~33s   -&gt;   ~7s
+</code></pre>
+
+  <p>
+    The second line is the one a person feels. The app waits for three
+    consecutive failures before it tells the user which printer setting is
+    probably responsible, and at eleven seconds an attempt — eight dead, three
+    of backoff — that advice took the better part of a minute to appear.
+  </p>
+
+  <h2>Two failures that had been printing one sentence</h2>
+
+  <p>
+    The logging fix came with a result I did not expect. I reproduced the
+    problem on my own printer by turning its camera setting off, got the
+    refusal above, and assumed I had reproduced the user's fault.
+  </p>
+
+  <p>
+    I had not. Under the new logging, his situation produces
+    <code>no reason reported</code> — because <code>.waiting</code> never fired
+    with an error at all. His printer went silent; mine refuses. A closed port
+    and a path that swallows packets are different causes with different fixes,
+    and before the log line they were indistinguishable.
+  </p>
+
+  <h2>Count attempts, not seconds</h2>
+
+  <p>
+    One more thing fell out of this, a week later and the wrong way round. With
+    refusals now instant, the comment next to that three-attempt threshold
+    looked wrong: it priced three attempts as "about half a minute," and three
+    attempts had just become seven seconds. I changed the threshold. Then I
+    reverted it.
+  </p>
+
+  <p>
+    The constant had not rotted. A count prices the two cases correctly
+    <em>because</em> it does not try to tell them apart.
+    <code>ECONNREFUSED</code> is definitive, so three of those genuinely is
+    worth only seven seconds of patience; a timeout is ambiguous and still
+    costs its full eight, so three of those is still half a minute. Had I
+    written the threshold as a duration, it would have been wrong for one of
+    them whichever number I picked.
+  </p>
+
+  <h2>What I'd tell you to check first</h2>
+
+  <p>
+    If an <code>NWConnection</code> is sitting there and your own timeout is
+    what eventually fires:
+  </p>
+
+  <ul>
+    <li><strong>Print the error inside <code>.waiting</code>, somewhere you can
+      read it from a device.</strong> It is the entire diagnosis and the
+      default place for it is unreachable in the field.</li>
+    <li><strong>Do not read <code>.waiting</code> as "still trying."</strong>
+      It also means "the host said no." Switch on the POSIX code.</li>
+    <li><strong>Keep the patience where it belongs.</strong>
+      <code>EHOSTUNREACH</code>, <code>ENETUNREACH</code> and
+      <code>ENETDOWN</code> are the cases the state was designed for, and
+      treating those as terminal will break reconnection after a wake.</li>
+    <li><strong>On iOS and macOS, rule out Local Network permission
+      first.</strong> While that prompt is unanswered or access is denied, the
+      path reports <code>.localNetworkDenied</code>; check
+      <code>connection.currentPath?.unsatisfiedReason</code> before treating
+      any <code>.waiting</code> reason as final. I have only tested this
+      triage on tvOS, which has no such prompt.</li>
+    <li><strong>Check your timeout message names the failure.</strong> A string
+      about network paths, printed because <em>your</em> timer expired, sends
+      people to re-check working hardware.</li>
+    <li><strong>Guard the continuation.</strong> <code>.waiting</code> repeats;
+      resuming twice is a crash.</li>
+  </ul>
+
+  <p>
+    The general version: a framework state that bundles "retry may help" with
+    "you have your answer" pushes the triage onto you, and if you skip it the
+    cost shows up as latency rather than as an error. Nothing was broken in
+    that log. Every attempt was simply being charged full price for an answer
+    that had already arrived.
+  </p>
+
+  <p>
+    Observed on an Apple TV 4K running tvOS 27, with a reproduction on the
+    tvOS 27 simulator; the app builds back to tvOS 17. Apple's own DTS
+    engineer has
+    <a href="https://developer.apple.com/forums/thread/719427">agreed on the
+    forums</a> that <code>.waiting</code> is "a poor match" for an error of
+    this kind, in a 2022 thread about a different POSIX code, and recommended
+    filing a bug. That thread has no answer in it.
+  </p>
+</article>
+<nav class="post-nav"><a href="/blog/">← All posts</a></nav>
+</main>
+<footer>
+  <nav class="footer-links">
+    <a href="/about/">About</a> &middot;
+    <a href="/blog/">Blog</a> &middot;
+    <a href="/printing/">3D printing</a> &middot;
+    <a href="/support/">Support</a> &middot;
+    <a href="/privacy/">Privacy</a> &middot;
+    <a href="/blog/feed.xml">RSS</a> &middot;
+    <a href="https://www.linkedin.com/in/mcmizzle">LinkedIn</a>
+  </nav>
+  <p class="footer-legal">&copy; 2026 Kevin McMahon (McMizzle)</p>
+</footer>
+</body>
+</html>

@@ -10,6 +10,13 @@
     <!-- ITEMS: newest first. Add each new post as the first <item>.
          pubDate must be RFC-822, e.g. Fri, 07 Aug 2026 12:00:00 +0000 -->
     <item>
+      <title>NWConnection reports a refused connection as waiting, not failed</title>
+      <link>https://mcmizzle.com/blog/nwconnection-connection-refused-waiting/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/nwconnection-connection-refused-waiting/</guid>
+      <pubDate>Tue, 20 Oct 2026 12:00:00 +0000</pubDate>
+      <description>A diagnostics export showed ten identical connection attempts, each about eight seconds long, each blaming a network that provably worked. The refusal had arrived instantly - Network.framework just files ECONNREFUSED under .waiting, where the documentation says the error is not fatal, so my own timeout spent eight seconds a try on a question already settled.</description>
+    </item>
+    <item>
       <title>A tvOS ScrollView with one focusable view won't scroll</title>
       <link>https://mcmizzle.com/blog/tvos-scrollview-wont-scroll/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/tvos-scrollview-wont-scroll/</guid>

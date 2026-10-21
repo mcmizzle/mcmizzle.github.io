@@ -7,6 +7,38 @@
     <language>en-us</language>
     <atom:link href="https://mcmizzle.com/blog/social.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title><![CDATA[NWConnection reports a refused connection as waiting, not failed]]></title>
+      <link>https://mcmizzle.com/blog/nwconnection-connection-refused-waiting/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/nwconnection-connection-refused-waiting/</guid>
+      <pubDate>Tue, 20 Oct 2026 12:00:00 +0000</pubDate>
+      <description><![CDATA[A user sent me a diagnostics file showing ten identical failures, each about eight seconds long, every one of them blaming his network. His network was fine. The same app was talking to the same device, at the same address, in the same second.
+
+Those eight seconds were my own timeout. The real answer had arrived in microseconds and I threw it away.
+
+Apple's Network framework reports a connection's progress as one of a handful of states. .waiting means roughly "this hasn't worked yet, but it might" — what you get while Wi-Fi settles after a device wakes, or before someone has answered a permission prompt. In those cases it really does sort itself out.
+
+It is also what you get when the other machine answers and says no. A closed port replies instantly and definitively. Apple's documentation for that state says, in as many words, that these errors are not fatal. For this one, that is wrong.
+
+So the state is doing two jobs — "hold on" and "you have your answer" — and only the error attached to it separates them. Read that error and a refusal costs nothing. Skip it and every attempt is charged the full length of whatever timeout you happened to write.
+
+The general version is the part I'd keep. When a framework bundles "retrying might help" with "this is settled," the triage is yours whether you do it or not, and skipping it shows up as latency rather than as an error. Nothing in that log was broken. Every attempt was paying full price for an answer that had already arrived.
+
+Full write-up, with the triage code and the continuation trap that comes with it: https://mcmizzle.com/blog/nwconnection-connection-refused-waiting/]]></description>
+      <content:encoded><![CDATA[A user sent me a diagnostics file showing ten identical failures, each about eight seconds long, every one of them blaming his network. His network was fine. The same app was talking to the same device, at the same address, in the same second.
+
+Those eight seconds were my own timeout. The real answer had arrived in microseconds and I threw it away.
+
+Apple's Network framework reports a connection's progress as one of a handful of states. .waiting means roughly "this hasn't worked yet, but it might" — what you get while Wi-Fi settles after a device wakes, or before someone has answered a permission prompt. In those cases it really does sort itself out.
+
+It is also what you get when the other machine answers and says no. A closed port replies instantly and definitively. Apple's documentation for that state says, in as many words, that these errors are not fatal. For this one, that is wrong.
+
+So the state is doing two jobs — "hold on" and "you have your answer" — and only the error attached to it separates them. Read that error and a refusal costs nothing. Skip it and every attempt is charged the full length of whatever timeout you happened to write.
+
+The general version is the part I'd keep. When a framework bundles "retrying might help" with "this is settled," the triage is yours whether you do it or not, and skipping it shows up as latency rather than as an error. Nothing in that log was broken. Every attempt was paying full price for an answer that had already arrived.
+
+Full write-up, with the triage code and the continuation trap that comes with it: https://mcmizzle.com/blog/nwconnection-connection-refused-waiting/]]></content:encoded>
+    </item>
+    <item>
       <title><![CDATA[A tvOS ScrollView with one focusable view won't scroll]]></title>
       <link>https://mcmizzle.com/blog/tvos-scrollview-wont-scroll/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/tvos-scrollview-wont-scroll/</guid>
