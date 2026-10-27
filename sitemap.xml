@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://mcmizzle.com/</loc>
-    <lastmod>2026-09-11</lastmod>
+    <lastmod>2026-10-27</lastmod>
     <priority>1.0</priority>
   </url>
   <url>
@@ -86,11 +86,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://mcmizzle.com/lamplighter/</loc>
-    <lastmod>2026-10-13</lastmod>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://mcmizzle.com/printing/</loc>
     <lastmod>2026-09-11</lastmod>
     <priority>0.8</priority>
@@ -102,7 +97,7 @@
   </url>
   <url>
     <loc>https://mcmizzle.com/support/</loc>
-    <lastmod>2026-08-23</lastmod>
+    <lastmod>2026-10-27</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
