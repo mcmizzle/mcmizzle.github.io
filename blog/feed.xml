@@ -10,6 +10,13 @@
     <!-- ITEMS: newest first. Add each new post as the first <item>.
          pubDate must be RFC-822, e.g. Fri, 07 Aug 2026 12:00:00 +0000 -->
     <item>
+      <title>tvOS has no Local Network permission prompt</title>
+      <link>https://mcmizzle.com/blog/tvos-no-local-network-permission/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/tvos-no-local-network-permission/</guid>
+      <pubDate>Tue, 27 Oct 2026 12:00:00 +0000</pubDate>
+      <description>I declared NSLocalNetworkUsageDescription on a tvOS target and no prompt ever appeared, which supplied a tidy explanation for a connection that stalled at launch. Apple's technote lists tvOS as unsupported for local network privacy; the key's own reference page says tvOS 14 and later. A declared key reads as evidence that the thing it configures exists.</description>
+    </item>
+    <item>
       <title>NWConnection reports a refused connection as waiting, not failed</title>
       <link>https://mcmizzle.com/blog/nwconnection-connection-refused-waiting/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/nwconnection-connection-refused-waiting/</guid>

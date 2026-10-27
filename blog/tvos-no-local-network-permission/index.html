@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tvOS has no Local Network permission prompt — McMizzle</title>
+<meta name="description" content="Apple's technote lists tvOS as unsupported for local network privacy. The plist key's own page says tvOS 14 and later. Only one of them is right.">
+<link rel="canonical" href="https://mcmizzle.com/blog/tvos-no-local-network-permission/">
+<link rel="alternate" type="application/rss+xml" title="McMizzle Blog" href="https://mcmizzle.com/blog/feed.xml">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf6ec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201a13">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://mcmizzle.com/blog/tvos-no-local-network-permission/">
+<meta property="og:title" content="tvOS has no Local Network permission prompt — McMizzle">
+<meta property="og:description" content="Apple's technote lists tvOS as unsupported for local network privacy. The plist key's own page says tvOS 14 and later. Only one of them is right.">
+<meta property="og:image" content="https://mcmizzle.com/assets/og-tvos-no-local-network-permission.png">
+<meta property="article:published_time" content="2026-10-27">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
+<main>
+<article class="post">
+  <h1>tvOS has no Local Network permission prompt</h1>
+  <p class="post-meta">Kevin McMahon · October 27, 2026</p>
+
+  <p>
+    My tvOS app (<a href="/ambientcast/">AmbientCast</a>, which watches a 3D
+    printer's camera) talks to hardware on the same Wi-Fi network: an RTSP
+    camera stream, an MQTT broker, and a multicast discovery probe to find the
+    printer in the first place. So the target declared
+    <code>NSLocalNetworkUsageDescription</code>, the way an iOS target would.
+  </p>
+
+  <p>
+    No prompt ever appeared. That did not look like a problem — plenty of
+    permissions get granted once and never asked again, and the networking
+    worked. What it did instead was supply an explanation for something else.
+    Connections at launch sometimes sat in <code>NWConnection</code>'s
+    <code>.waiting</code> state for a few seconds, and two comments in my
+    networking code said why: the user had not answered the Local Network
+    prompt yet.
+  </p>
+
+  <p>
+    There is no prompt. There has never been one on this platform, and the key
+    I had declared could not be displayed by anything on an Apple TV.
+  </p>
+
+  <h2>The answer is one row of one table</h2>
+
+  <p>
+    Apple's <a href="https://developer.apple.com/documentation/technotes/tn3179-understanding-local-network-privacy">TN3179,
+    Understanding local network privacy</a>, lists the platforms that have the
+    feature. Both absences are the interesting part:
+  </p>
+
+  <pre><code>Platform    Supported   Introduced
+iOS         yes         iOS 14
+iPadOS      yes         iPadOS 14
+macOS       yes         macOS 15
+tvOS        no          -
+visionOS    yes         visionOS 1
+watchOS     no          -
+</code></pre>
+
+  <p>
+    tvOS and watchOS do not have local network privacy. Not "it is granted
+    automatically", not "it prompts somewhere else" — the mechanism is absent,
+    so there is no privilege, no alert, and nothing in Settings. The same
+    technote notes separately that <a href="https://developer.apple.com/documentation/technotes/tn3179-understanding-local-network-privacy">"The
+    simulator doesn’t support local network privacy."</a> That one bites iOS
+    developers; the table above is the tvOS version of the same surprise.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what's a purpose string?</summary>
+    <p>
+      A sentence you put in your app's settings file explaining why you want
+      access to something private — the camera, contacts, the local network.
+      When the system asks the user for permission, your sentence is the text
+      in the dialog. No dialog, nothing to read it.
+    </p>
+  </details>
+
+  <h2>The key's own documentation disagrees</h2>
+
+  <p>
+    Here is why this is easy to get wrong rather than careless. The reference
+    page for <a href="https://developer.apple.com/documentation/bundleresources/information-property-list/nslocalnetworkusagedescription"><code>NSLocalNetworkUsageDescription</code></a>
+    carries an availability badge reading <strong>tvOS 14.0+</strong>, and its
+    description is two sentences: <a href="https://developer.apple.com/documentation/bundleresources/information-property-list/nslocalnetworkusagedescription">"Any
+    app that uses the local network, directly or indirectly, should include
+    this description. This includes apps that use Bonjour and services
+    implemented with Bonjour, as well as direct unicast or multicast
+    connections to local hosts."</a> My app makes unicast and multicast connections to
+    local hosts. I included the description.
+  </p>
+
+  <p>
+    <a href="https://developer.apple.com/documentation/bundleresources/information-property-list/nsbonjourservices"><code>NSBonjourServices</code></a>
+    says tvOS 14.0+ too. So two plist keys advertise themselves as available on
+    a platform that the technote governing them says has nothing to configure.
+    The key reference is the page you land on from a search for the key name.
+    The technote is the page that is right.
+  </p>
+
+  <p>
+    The multicast side is at least consistent. TN3179 scopes it explicitly —
+    <a href="https://developer.apple.com/documentation/technotes/tn3179-understanding-local-network-privacy">"Additionally,
+    if your iOS app performs multicast operations, sign it with the
+    <code>com.apple.developer.networking.multicast</code>
+    entitlement"</a> — and adds that "The multicast entitlement isn’t
+    required on macOS." On tvOS you need neither it nor the purpose
+    string.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what's multicast discovery?</summary>
+    <p>
+      Shouting into a room instead of calling someone by name. An app sends one
+      message to a special address that every device on the network is
+      listening to, and whatever it was looking for answers. It is how an app
+      finds a printer or a speaker without being told its address first.
+    </p>
+  </details>
+
+  <h2>What the declared key cost</h2>
+
+  <p>
+    Nothing, directly. It is inert. The cost was that it read as evidence.
+  </p>
+
+  <p>
+    A purpose string in the bundle is a statement that the thing it configures
+    exists. So when a connection sat in <code>.waiting</code> at launch, "the
+    permission prompt hasn't been answered" was a tidy explanation standing
+    right next to a key that appeared to confirm it. That comment lived in my
+    code for nearly three months, in the one file someone would open to decide
+    whether the patience was still needed.
+  </p>
+
+  <p>
+    The direction that makes it dangerous is the correction, not the error.
+    <code>.waiting</code> at tvOS launch is real — it is Wi-Fi associating or
+    DNS settling after the device wakes, and the connection does reach
+    <code>.ready</code> on its own. Learning that tvOS has no prompt reads as
+    an argument for deleting the timeout that bounds the wait. That timeout is
+    the thing standing between an unreachable host and a connect call that
+    <a href="/blog/nwconnection-connection-refused-waiting/">hangs
+    forever</a>.
+  </p>
+
+  <p>
+    What actually happens on tvOS is simpler than the permission story. The
+    app's discovery joins its multicast group and finds the printer about a
+    second after launch. With the key removed, a 33-minute run on the Apple TV
+    heard both printers announcing themselves every few seconds. There is
+    nothing to grant and no state to check, which cuts both ways: you cannot
+    be denied, and you cannot ask.
+  </p>
+
+  <h2>The same thing had happened with App Transport Security</h2>
+
+  <p>
+    The tvOS target also carried an <code>NSAppTransportSecurity</code>
+    dictionary with <code>NSAllowsLocalNetworking</code> in it, justified by
+    the printer's video and a diagnostic stream URL. Checking that turned out
+    to be the same exercise twice.
+  </p>
+
+  <p>
+    Neither <a href="https://developer.apple.com/documentation/bundleresources/information-property-list/nsapptransportsecurity"><code>NSAppTransportSecurity</code></a>
+    nor <a href="https://developer.apple.com/documentation/bundleresources/information-property-list/nsapptransportsecurity/nsallowslocalnetworking"><code>NSAllowsLocalNetworking</code></a>
+    lists tvOS in its availability at all — iOS, iPadOS, macOS and visionOS
+    only. And ATS is described as changing
+    <a href="https://developer.apple.com/documentation/bundleresources/information-property-list/nsapptransportsecurity">"the
+    default security for HTTP connections"</a>. The camera and the broker are
+    not HTTP: both are raw <code>NWConnection</code> sockets rather than
+    <code>URLSession</code> requests.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what's App Transport Security?</summary>
+    <p>
+      A rule Apple applies to an app's web requests: use HTTPS, with a modern
+      enough encryption setup, or the request fails. Apps that genuinely need
+      an exception declare it in the settings file. It governs web-style
+      requests, not every byte an app puts on the network.
+    </p>
+  </details>
+
+  <p>
+    That was still reasoning, so I measured it. A release build with the
+    dictionary removed, installed on a physical Apple TV 4K running tvOS 27,
+    against a live camera: the app's local HLS server served 98 and 99 requests
+    per minute against a 97-to-100 baseline, Picture in Picture became
+    available 13 seconds after launch, and the log recorded no transport
+    errors. The iOS target has never declared the key and drives the same
+    loopback player. It was load-bearing for nothing.
+  </p>
+
+  <h2>What I'd tell you to check first</h2>
+
+  <p>
+    If you are porting something that talks to hardware on the LAN:
+  </p>
+
+  <ul>
+    <li><strong>On tvOS and watchOS, stop looking for the prompt.</strong> It
+      does not exist. A connection stuck at launch is a path that isn't viable
+      yet, a port already in use, or a host that isn't there.</li>
+    <li><strong>Trust the technote over the key reference.</strong> When a
+      plist key's availability badge and the technote that governs the feature
+      disagree, the badge is describing a key the OS will accept, not a
+      mechanism it implements.</li>
+    <li><strong>Check which API you're actually using before reaching for
+      ATS.</strong> It governs HTTP through the URL loading system. Raw
+      sockets through Network.framework are a different path.</li>
+    <li><strong>Delete the key rather than keeping it as harmless.</strong>
+      This is the part I would argue for hardest. An inert declaration costs
+      nothing to execute and works as evidence forever.</li>
+    <li><strong>Keep the iOS declaration.</strong> iOS really does prompt, and
+      that sentence is what your user reads. This is a per-platform answer, not
+      a cleanup to apply everywhere.</li>
+  </ul>
+
+  <p>
+    The general version: a configuration key is not an observation. I had a
+    purpose string, a plausible symptom and a documented API, and the three of
+    them agreed with each other for nearly three months without any of them being
+    checked against the platform. The thing that settled it was a table with a
+    "no" in it, which no amount of reading my own code was going to produce.
+  </p>
+
+  <p>
+    Somebody asked this on the Apple Developer Forums in July 2021 —
+    <a href="https://developer.apple.com/forums/thread/685506">"Also there
+    seems to be no 'local networking' permission dialog in tvOS - is that also
+    correct?"</a> — in a thread that is otherwise about a UDP port. An Apple
+    engineer answered the multicast half and never that sentence. It is still
+    unanswered, which is some of why this post exists: at the time, the
+    technote carrying the table had not yet been published under its current
+    name.
+  </p>
+</article>
+<nav class="post-nav"><a href="/blog/">← All posts</a></nav>
+</main>
+<footer>
+  <nav class="footer-links">
+    <a href="/about/">About</a> &middot;
+    <a href="/blog/">Blog</a> &middot;
+    <a href="/printing/">3D printing</a> &middot;
+    <a href="/support/">Support</a> &middot;
+    <a href="/privacy/">Privacy</a> &middot;
+    <a href="/blog/feed.xml">RSS</a> &middot;
+    <a href="https://www.linkedin.com/in/mcmizzle">LinkedIn</a>
+  </nav>
+  <p class="footer-legal">&copy; 2026 Kevin McMahon (McMizzle)</p>
+</footer>
+</body>
+</html>

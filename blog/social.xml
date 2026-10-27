@@ -7,6 +7,34 @@
     <language>en-us</language>
     <atom:link href="https://mcmizzle.com/blog/social.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title><![CDATA[tvOS has no Local Network permission prompt]]></title>
+      <link>https://mcmizzle.com/blog/tvos-no-local-network-permission/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/tvos-no-local-network-permission/</guid>
+      <pubDate>Tue, 27 Oct 2026 12:00:00 +0000</pubDate>
+      <description><![CDATA[I had a sentence in my Apple TV app's configuration explaining why it needed access to the local network. It had been there for months. Nothing on an Apple TV can display it, because tvOS has no local network permission — there is no prompt, no setting, and nothing to grant.
+
+It cost nothing to have. What it cost was being believed.
+
+Connections in that app sometimes stalled for a few seconds at launch, and two comments in my own code explained why: the user hadn't answered the permission prompt yet. That explanation sat directly next to a declared key that appeared to confirm the prompt existed, so nobody questioned either of them. It stood for nearly three months.
+
+The answer was one row of one table in an Apple technote: tvOS, not supported. And the reason it took nearly three months to find is that Apple's own documentation disagrees with itself. The page for the key says it's available on tvOS 14 and later, and tells you any app using the local network should include it. The page for the feature says the platform doesn't have the feature. Both are live right now. Search the key name and you get the wrong one.
+
+The transferable part has nothing to do with Apple TVs. A configuration setting is not an observation. I had a declared key, a plausible symptom and a documented API, and the three agreed with each other for nearly three months without one of them ever being checked against the platform. A setting you declare will be read as proof that the thing it configures exists — by your colleagues, and by you.
+
+Full write-up, with what the correction nearly broke: https://mcmizzle.com/blog/tvos-no-local-network-permission/]]></description>
+      <content:encoded><![CDATA[I had a sentence in my Apple TV app's configuration explaining why it needed access to the local network. It had been there for months. Nothing on an Apple TV can display it, because tvOS has no local network permission — there is no prompt, no setting, and nothing to grant.
+
+It cost nothing to have. What it cost was being believed.
+
+Connections in that app sometimes stalled for a few seconds at launch, and two comments in my own code explained why: the user hadn't answered the permission prompt yet. That explanation sat directly next to a declared key that appeared to confirm the prompt existed, so nobody questioned either of them. It stood for nearly three months.
+
+The answer was one row of one table in an Apple technote: tvOS, not supported. And the reason it took nearly three months to find is that Apple's own documentation disagrees with itself. The page for the key says it's available on tvOS 14 and later, and tells you any app using the local network should include it. The page for the feature says the platform doesn't have the feature. Both are live right now. Search the key name and you get the wrong one.
+
+The transferable part has nothing to do with Apple TVs. A configuration setting is not an observation. I had a declared key, a plausible symptom and a documented API, and the three agreed with each other for nearly three months without one of them ever being checked against the platform. A setting you declare will be read as proof that the thing it configures exists — by your colleagues, and by you.
+
+Full write-up, with what the correction nearly broke: https://mcmizzle.com/blog/tvos-no-local-network-permission/]]></content:encoded>
+    </item>
+    <item>
       <title><![CDATA[NWConnection reports a refused connection as waiting, not failed]]></title>
       <link>https://mcmizzle.com/blog/nwconnection-connection-refused-waiting/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/nwconnection-connection-refused-waiting/</guid>
