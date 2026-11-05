@@ -23,7 +23,7 @@
 <header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
 <main>
   <h1>Privacy Policy</h1>
-  <p class="tagline">Last updated: October 10, 2026. Applies to every McMizzle app, including AmbientCast and Calorie Burndown.</p>
+  <p class="tagline">Last updated: November 5, 2026. Applies to every McMizzle app, including AmbientCast and Calorie Burndown.</p>
 
   <p>
     The short version: your data stays on your own devices and in your own
@@ -56,9 +56,11 @@
       the Sync with iCloud switch rather than part of it; and off until you turn
       it on. With it on, each access code and camera login is
       <strong>encrypted on your device before it is sent</strong> and kept in
-      your own private iCloud database, so your other devices can use it; the
-      key is derived from your iCloud Keychain, which means <strong>neither
-      Apple nor McMizzle can read it</strong>.
+      your own private iCloud database, so your other devices can use it.
+      <strong>McMizzle can never read it</strong>: there is no server, and no
+      access to your iCloud account. <strong>With Advanced Data Protection on,
+      Apple cannot read it either</strong>; without it, Apple holds the keys,
+      as it does for most iCloud data.
       <strong>Turning the setting off takes them back out of iCloud</strong>:
       the device deletes the credentials for the printers and cameras it knows
       about — it cannot speak for one only another device has set up — and
@@ -125,8 +127,8 @@
           switch that covers the items above. These travel to the same Apple
           Account by a different route (CloudKit, rather than the key-value
           storage the items above use), as records <strong>encrypted on your
-          device before they are sent</strong>, with a key derived from your
-          iCloud Keychain. Neither Apple nor McMizzle can read them. This is
+          device before they are sent</strong>. McMizzle can never read them,
+          and with Advanced Data Protection on, neither can Apple. This is
           the only thing listed here that is a secret, which is why it is off
           by default, asked for on its own, and removed from iCloud again when
           you turn it off.</li>
