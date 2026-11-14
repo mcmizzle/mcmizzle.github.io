@@ -23,7 +23,7 @@
 <header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
 <main>
   <h1>Privacy Policy</h1>
-  <p class="tagline">Last updated: November 5, 2026. Applies to every McMizzle app, including AmbientCast and Calorie Burndown.</p>
+  <p class="tagline">Last updated: November 14, 2026. Applies to every McMizzle app, including AmbientCast and Calorie Burndown.</p>
 
   <p>
     The short version: your data stays on your own devices and in your own
@@ -43,9 +43,8 @@
     <li>
       <strong>Account credentials and access tokens</strong> (e.g. AmbientCast's
       YouTube sign-in) are stored in your device's Keychain, on-device only.
-      Passwords are sent directly to the relevant third-party service to
-      authenticate — never stored by the app itself. Your Google/YouTube
-      tokens never sync at all: they stay on the device you signed in on.
+      Your Google/YouTube tokens never sync at all: they stay on the device
+      you signed in on.
     </li>
     <li>
       <strong>Printer access codes and camera passwords</strong> (AmbientCast)
@@ -109,16 +108,18 @@
         <li><strong>AmbientCast</strong> — your custom watermark image; the
           printers and cameras you have set up (names, serial numbers,
           addresses, ports, stream paths and connection modes), so a camera
-          added on your iPhone appears on your Apple TV; the list of
-          timelapses the app has published to YouTube (video identifiers,
-          titles, printer names, publish times, and whether the print failed),
-          including a record of which entries you have since removed from that
-          list; and, if you use that feature, which of your devices is
+          added on your iPhone appears on your Apple TV; and, if you use that
+          feature, which of your devices is
           recording the timelapse — a random identifier for the device that has
           claimed the job, so two of your devices watching the same print
           don't both record it. It identifies the device to your other
           devices, not you to anyone.
-          <strong>No access code or password is in that list</strong> — those
+          Versions before 1.11 also synced the list of timelapses the app had
+          published to YouTube (video identifiers, titles, printer names,
+          publish times, and whether the print failed). 1.11 no longer keeps
+          that list, and deletes the old copy from your device and your iCloud
+          the next time it opens.
+          <strong>No access code or password is in any of this</strong> — those
           are a separate, opt-in thing, described in the two points below.</li>
         <li><strong>AmbientCast's printer access codes, and its cameras'
           usernames and passwords</strong> — but only if you turn on
@@ -137,8 +138,9 @@
           so the report goes to your private iCloud database for your iPhone to
           pick up and share. It is the app's own logs, encrypted on the device
           before it is sent, and it is the same text you can read on screen
-          first: the access codes, camera usernames and passwords, and printer
-          serial numbers the app holds are replaced before it is written, while
+          first: the access codes, camera usernames and passwords, printer
+          serial numbers, YouTube sign-in tokens and live stream key the app
+          holds are replaced before it is written, while
           network addresses, printer models and error codes are kept, because
           those are what make a log useful. Nothing is sent unless you ask for
           it, there is one report per device, and sending again from that device
@@ -309,11 +311,12 @@
     (which invalidates them on Google's side even if the local copy hasn't
     been cleared yet). No copy of these tokens is ever retained anywhere off
     your device — there is no McMizzle-operated server for any of it to be
-    retained on. One thing derived from these calls does leave your device:
-    the list of timelapses you have published, including their video
-    identifiers and titles, syncs through your own iCloud account as described
-    under "What McMizzle apps store, and where". The tokens themselves never
-    do, and nothing derived from them ever reaches McMizzle.
+    retained on. From 1.11, nothing derived from these calls leaves your
+    device either. Earlier versions synced the list of timelapses you had
+    published through your own iCloud account, and 1.11 deletes it, as
+    described under "What McMizzle apps store, and where". The tokens
+    themselves never leave your device, and nothing derived from them ever
+    reaches McMizzle.
   </p>
   <p>
     <strong>Limited Use.</strong> AmbientCast's use of information received
