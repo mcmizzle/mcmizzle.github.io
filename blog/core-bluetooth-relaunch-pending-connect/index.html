@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Core Bluetooth stopped relaunching my app, because for five seconds nothing was pending — McMizzle</title>
+<meta name="description" content="Opening the app always worked and the background never did. I had timed a five-second disconnect myself, and dropped the only thing iOS restores.">
+<link rel="canonical" href="https://mcmizzle.com/blog/core-bluetooth-relaunch-pending-connect/">
+<link rel="alternate" type="application/rss+xml" title="McMizzle Blog" href="https://mcmizzle.com/blog/feed.xml">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf6ec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201a13">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://mcmizzle.com/blog/core-bluetooth-relaunch-pending-connect/">
+<meta property="og:title" content="Core Bluetooth stopped relaunching my app, because for five seconds nothing was pending — McMizzle">
+<meta property="og:description" content="Opening the app always worked and the background never did. I had timed a five-second disconnect myself, and dropped the only thing iOS restores.">
+<meta property="og:image" content="https://mcmizzle.com/assets/og-core-bluetooth-relaunch-pending-connect.png">
+<meta property="article:published_time" content="2026-11-14">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
+<main>
+<article class="post">
+  <h1>Core Bluetooth stopped relaunching my app, because for five seconds nothing was pending</h1>
+  <p class="post-meta">Kevin McMahon · November 14, 2026</p>
+
+  <p>
+    One of my side projects sits on my phone doing nothing most of the day. It
+    waits for a Bluetooth bathroom scale to wake up, reads the weigh-in, and
+    writes it to HealthKit. No launch, no tap. iOS relaunches the app from
+    terminated when the scale powers up its radio — a documented Core Bluetooth
+    feature, and the whole point of the thing.
+  </p>
+
+  <p>
+    About a week after I shipped an unrelated change, the background readings
+    stopped. Opening the app by hand worked every time: connect, read, write,
+    correct number on the screen. Left alone, nothing, for days, and it never
+    recovered on its own.
+  </p>
+
+  <p>
+    That combination is the diagnosis, so I will put it first. If opening
+    the app always works, the background never does, and it never fixes itself,
+    then you are not holding the pending request iOS needs in order to wake
+    you.
+  </p>
+
+  <h2>Only a pending request gets you relaunched</h2>
+
+  <p>
+    The mechanism is Core Bluetooth state restoration, and its contract is
+    narrower than it tends to be described. Apple's
+    <a href="https://developer.apple.com/library/archive/qa/qa1962/_index.html">QA1962</a>
+    is unambiguous:
+  </p>
+
+  <blockquote>
+    <p>
+      Also, it is important to keep in mind that the app will be relaunched and
+      restored <strong>if and only if</strong> it is pending on a specific
+      Bluetooth event or action (like scanning, connecting, or a subscribed
+      notification characteristic), and this event has occurred.
+    </p>
+  </blockquote>
+
+  <details class="eli5">
+    <summary>ELI5: what is state restoration?</summary>
+    <p>
+      Normally an app stops existing when the system reclaims it, and nothing
+      it was waiting for survives. State restoration is a deal you opt into:
+      you tag your Bluetooth object with an identifier, and the system
+      remembers what you were waiting on. If it happens later, your app is
+      started back up in the background.
+    </p>
+  </details>
+
+  <p>
+    So three things can wake you, and you have to be holding one of them at the
+    instant you are terminated. My app holds exactly one: a connect to a single
+    known peripheral that it never cancels. A Core Bluetooth connect has no
+    timeout, so it sits there indefinitely and completes whenever the scale's
+    radio comes up. No scan, no subscription, nothing to fall back on.
+  </p>
+
+  <h2>The gap I built on purpose</h2>
+
+  <p>
+    The change a week earlier was a battery fix. A connected scale is an awake
+    scale — its radio stays up servicing the link for as long as a central
+    holds it — so the app started hanging up once a weigh-in was settled,
+    instead of holding the connection out of convenience.
+  </p>
+
+  <p>
+    A scale that is still awake resumes advertising the moment you let go, so
+    reconnecting immediately puts you straight back on it and saves nothing. It
+    needs a few seconds of quiet first. I gave it five, and I made the mistake
+    of timing them myself.
+  </p>
+
+  <pre><code>// what I had: a five-second window with no pending connect in it
+central.cancelPeripheralConnection(peripheral)
+let work = DispatchWorkItem { [weak self] in self?.reArm() }
+DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: work)
+</code></pre>
+
+  <p>
+    Read that against QA1962 and the bug is plain. For those five seconds the
+    app is pending on nothing, so there is nothing to preserve. A termination
+    inside that window does not degrade the feature, it ends it: with nothing
+    pending, iOS has no reason to relaunch the app again, and only somebody
+    opening it by hand puts it back on watch.
+  </p>
+
+  <p>
+    The window also lands in the worst available place. This code usually runs
+    in a process iOS woke up for a Bluetooth event and would quite like back.
+  </p>
+
+  <p>
+    And the reason it took a week to notice is the same fact seen from the
+    user's side. Checking it fixes it. Every time I opened the app to see whether
+    it was working, I re-armed the connect, and it was.
+  </p>
+
+  <h2>The assertion I added to protect that window made it worse</h2>
+
+  <p>
+    I had seen the risk when I wrote it, and covered it the obvious way: ask
+    UIKit for a little more runtime, so the process survives long enough to
+    re-arm.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what's a background task assertion?</summary>
+    <p>
+      When an app goes to the background, the system suspends it fairly
+      quickly. An assertion is a request for a short extension — don't freeze
+      me yet, I am in the middle of something — and it comes with an obligation
+      to say when you are finished. If you never say, the system stops trusting
+      you and kills the app.
+    </p>
+  </details>
+
+  <pre><code>// also what I had, and this is the part that bites
+bgTask = UIApplication.shared.beginBackgroundTask(withName: "sleep-grace") { [weak self] in
+    DispatchQueue.main.async {   // this never runs
+        self?.reArm()
+        self?.endGraceTask()     // so the task is never ended
+    }
+}
+</code></pre>
+
+  <p>
+    Apple's reference page for
+    <a href="https://developer.apple.com/documentation/uikit/uiapplication/beginbackgroundtask(expirationhandler:)"><code>beginBackgroundTask(expirationHandler:)</code></a>
+    rules that out in two consecutive sentences:
+  </p>
+
+  <blockquote>
+    <p>
+      Failure to end the task explicitly will result in the termination of the
+      app. The system calls the handler synchronously on the main thread,
+      blocking the app’s suspension momentarily.
+    </p>
+  </blockquote>
+
+  <p>
+    The handler is not merely running on the main thread. The handler
+    <em>is</em> the thing holding suspension off, and it stops holding it the
+    moment it returns — so anything it dispatches asynchronously to that same
+    queue is queued behind its own return. The task is never ended, and the app
+    is terminated for not ending it, at the precise moment there was nothing
+    pending to relaunch it for.
+  </p>
+
+  <p>
+    An assertion I added to make termination less likely was causing it.
+  </p>
+
+  <p>
+    There is a system log for this, and it is the only outward sign. A
+    developer on the forums
+    <a href="https://developer.apple.com/forums/thread/729335">posted it in
+    2023</a>, from the same shape of handler, and never got an answer naming
+    the cause:
+  </p>
+
+  <pre><code>[BackgroundTask] Background task still not ended after expiration handlers
+were called: … This app will likely be terminated by the system. Call
+UIApplication.endBackgroundTask(_:) to avoid this.
+</code></pre>
+
+  <p>
+    Apple's
+    <a href="https://developer.apple.com/documentation/uikit/extending-your-app-s-background-execution-time">conceptual
+    article on this</a> gets it right without saying why: its sample handler
+    calls <code>endBackgroundTask</code> directly, no hop. The reason is a
+    parameter description on a different page.
+  </p>
+
+  <p>
+    It is a cousin of <a href="/blog/weak-self-teardown-never-runs/">a teardown
+    handed to <code>queue.async { [weak self] }</code></a> that may never run —
+    but there the object dies, and here it is the permission that expires.
+  </p>
+
+  <h2>Core Bluetooth already had the primitive</h2>
+
+  <p>
+    The fix was a connect option I did not know existed.
+    <a href="https://developer.apple.com/documentation/corebluetooth/cbconnectperipheraloptionstartdelaykey"><code>CBConnectPeripheralOptionStartDelayKey</code></a>
+    asks the system to wait before <em>completing</em> a connection.
+  </p>
+
+  <pre><code>// re-arm immediately, and let the system sit on it
+central.connect(peripheral, options: [
+    CBConnectPeripheralOptionStartDelayKey: NSNumber(value: 5)
+])
+</code></pre>
+
+  <p>
+    Its reference page is two sentences long and does not mention the property
+    that makes it useful here. For that I had to go back to a
+    <a href="https://developer.apple.com/forums/thread/90938">2017 forum
+    thread</a>, where somebody asked what the undocumented new key was for and
+    an Apple engineer explained it supports talking to a peripheral
+    periodically without holding a connection open: hang up, then reconnect
+    after the delay.
+  </p>
+
+  <p>
+    The pending connect exists from the moment you ask for it, and a pending
+    connection is exactly what the
+    <a href="https://developer.apple.com/documentation/corebluetooth/cbcentralmanagerrestoredstateperipheralskey">restored
+    state</a> carries across termination. So the wake path is never broken and
+    the app does not have to survive the window — the system holds the
+    timer. The scale still gets its five quiet seconds, because what the
+    system defers is completing the connect, not holding it.
+  </p>
+
+  <p>
+    That deleted the work item, the assertion, its expiration handler, and the
+    "sleeping" state they needed between them.
+  </p>
+
+  <h2>The same mistake one layer up</h2>
+
+  <p>
+    While I was in there I found the gap again, somewhere I had never thought
+    of as a background path. The <code>CBCentralManager</code> was built
+    lazily, from a SwiftUI <code>.task</code>, after an <code>await</code> on
+    HealthKit authorization.
+  </p>
+
+  <p>
+    <a href="https://developer.apple.com/documentation/corebluetooth/cbcentralmanagerdelegate/centralmanager(_:willrestorestate:)"><code>centralManager(_:willRestoreState:)</code></a>
+    is the first delegate method Core Bluetooth calls on a restored central,
+    before <code>centralManagerDidUpdateState</code>. It can only call it on a
+    central that already exists.
+  </p>
+
+  <p>
+    A relaunch for a Bluetooth event has no window and no scene, so a
+    <code>@StateObject</code>, a <code>.task</code> or an <code>onAppear</code>
+    is not a place that launch can be relied on to reach. And an
+    <code>await</code> between launch and the central existing is a suspension
+    point in the one path that must not have one. The coordinator became a
+    singleton for the same reason, so nothing about its lifetime waits on
+    SwiftUI.
+  </p>
+
+  <pre><code>@main
+struct MyApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    var body: some Scene { WindowGroup { ContentView() } }
+}
+
+final class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(
+        _ app: UIApplication,
+        didFinishLaunchingWithOptions options: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -&gt; Bool {
+        Coordinator.shared.startBluetooth()   // builds the central; nothing awaits above it
+        return true
+    }
+}
+</code></pre>
+
+  <p>
+    Unconditionally, on every launch. There is no way to be cleverer than that,
+    because Apple's note on the
+    <a href="https://developer.apple.com/documentation/corebluetooth/cbcentralmanageroptionrestoreidentifierkey">restore
+    identifier key</a> is explicit that a SwiftUI app cannot tell this is the
+    Bluetooth launch:
+  </p>
+
+  <blockquote>
+    <p>
+      In scene-based apps that adopt <code>UISceneDelegate</code>,
+      <code>launchOptions</code> is always <code>nil</code> on launch, so
+      <code>UIApplicationLaunchOptionsBluetoothCentralsKey</code> is not
+      available to deliver identifiers.
+    </p>
+  </blockquote>
+
+  <p>
+    Only the authorization prompts stayed behind the scene; those genuinely do
+    need a foreground app.
+  </p>
+
+  <h2>What I'd tell you to check first</h2>
+
+  <p>
+    Go looking for windows where your app holds no pending request, and
+    treat each as the feature being off rather than a risk to it. A disconnect
+    you perform deliberately is the easiest way to open one without noticing.
+  </p>
+
+  <p>
+    If you need a delay, make the system hold it. A timer of your own only runs
+    while your process does, which in the background is the one assumption you
+    cannot make.
+  </p>
+
+  <p>
+    Never dispatch asynchronously out of an expiration handler. Do the cleanup
+    and end the task before returning, whatever thread you think you ought to
+    be on.
+  </p>
+
+  <p>
+    And build the central in <code>didFinishLaunchingWithOptions</code>, before
+    the first <code>await</code>. A background relaunch arrives at the app
+    delegate and nowhere else.
+  </p>
+
+  <p>
+    All four are in, on iOS 27, in an app targeting iOS 17 and up. On November
+    14 somebody stood on the scale with the app closed, and the weigh-in
+    arrived in HealthKit on its own.
+  </p>
+</article>
+<nav class="post-nav"><a href="/blog/">← All posts</a></nav>
+</main>
+<footer>
+  <nav class="footer-links">
+    <a href="/about/">About</a> &middot;
+    <a href="/blog/">Blog</a> &middot;
+    <a href="/printing/">3D printing</a> &middot;
+    <a href="/support/">Support</a> &middot;
+    <a href="/privacy/">Privacy</a> &middot;
+    <a href="/blog/feed.xml">RSS</a> &middot;
+    <a href="https://www.linkedin.com/in/mcmizzle">LinkedIn</a>
+  </nav>
+  <p class="footer-legal">&copy; 2026 Kevin McMahon (McMizzle)</p>
+</footer>
+</body>
+</html>

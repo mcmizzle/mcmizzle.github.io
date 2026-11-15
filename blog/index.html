@@ -36,6 +36,18 @@
   <!-- POST LIST: newest first. Add each new post as the first <li>. -->
   <ul class="post-list">
     <li>
+      <p class="post-meta">November 14, 2026</p>
+      <span class="post-title"><a href="/blog/core-bluetooth-relaunch-pending-connect/">Core Bluetooth stopped relaunching my app, because for five seconds nothing was pending</a></span>
+      <p class="post-summary">
+        Background readings stopped arriving while opening the app by hand
+        worked every time, and it never recovered on its own. Core Bluetooth
+        relaunches a terminated app only if it is pending on a Bluetooth event
+        &mdash; and I had hung up deliberately, then timed the five-second gap
+        myself. The <code>beginBackgroundTask</code> assertion I added to
+        protect that gap was making the termination more likely, not less.
+      </p>
+    </li>
+    <li>
       <p class="post-meta">October 27, 2026</p>
       <span class="post-title"><a href="/blog/tvos-no-local-network-permission/">tvOS has no Local Network permission prompt</a></span>
       <p class="post-summary">

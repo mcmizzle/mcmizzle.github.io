@@ -7,6 +7,34 @@
     <language>en-us</language>
     <atom:link href="https://mcmizzle.com/blog/social.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title><![CDATA[Core Bluetooth stopped relaunching my app, because for five seconds nothing was pending]]></title>
+      <link>https://mcmizzle.com/blog/core-bluetooth-relaunch-pending-connect/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/core-bluetooth-relaunch-pending-connect/</guid>
+      <pubDate>Sat, 14 Nov 2026 12:00:00 +0000</pubDate>
+      <description><![CDATA[My phone app has one job: wake up by itself when a Bluetooth scale is used, read the weight, and file it. For about a week it stopped doing that — and every time I opened the app to check, it worked perfectly.
+
+That isn't a coincidence, it's the bug. Opening the app was what put it back on watch, so checking it hid it.
+
+iOS will restart a terminated app for a Bluetooth event, but only if it was waiting on something specific when it died. Mine waits on one thing: a connection request it never cancels. I'd added a feature that hung up for five seconds so the scale's radio could sleep instead of draining its batteries — and I timed those five seconds myself. In that window the app was waiting on nothing. Terminated there, it had nothing to be woken for, and nothing would wake it again until a person opened it.
+
+I'd spotted that risk and covered it: ask iOS for extra runtime so the process survives the window. That made it worse. When the borrowed time runs out you get one callback, and that callback is itself what holds the system off — it stops the moment it returns. My cleanup ran asynchronously from inside it, so it queued behind its own return and never ran. An assertion I added to make termination less likely was causing it.
+
+The transferable part: if you need a delay in the background, make the operating system hold it. A timer of your own only runs while your process does, and the background is exactly where that assumption fails.
+
+Full write-up, with the API that does this properly: https://mcmizzle.com/blog/core-bluetooth-relaunch-pending-connect/]]></description>
+      <content:encoded><![CDATA[My phone app has one job: wake up by itself when a Bluetooth scale is used, read the weight, and file it. For about a week it stopped doing that — and every time I opened the app to check, it worked perfectly.
+
+That isn't a coincidence, it's the bug. Opening the app was what put it back on watch, so checking it hid it.
+
+iOS will restart a terminated app for a Bluetooth event, but only if it was waiting on something specific when it died. Mine waits on one thing: a connection request it never cancels. I'd added a feature that hung up for five seconds so the scale's radio could sleep instead of draining its batteries — and I timed those five seconds myself. In that window the app was waiting on nothing. Terminated there, it had nothing to be woken for, and nothing would wake it again until a person opened it.
+
+I'd spotted that risk and covered it: ask iOS for extra runtime so the process survives the window. That made it worse. When the borrowed time runs out you get one callback, and that callback is itself what holds the system off — it stops the moment it returns. My cleanup ran asynchronously from inside it, so it queued behind its own return and never ran. An assertion I added to make termination less likely was causing it.
+
+The transferable part: if you need a delay in the background, make the operating system hold it. A timer of your own only runs while your process does, and the background is exactly where that assumption fails.
+
+Full write-up, with the API that does this properly: https://mcmizzle.com/blog/core-bluetooth-relaunch-pending-connect/]]></content:encoded>
+    </item>
+    <item>
       <title><![CDATA[tvOS has no Local Network permission prompt]]></title>
       <link>https://mcmizzle.com/blog/tvos-no-local-network-permission/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/tvos-no-local-network-permission/</guid>
