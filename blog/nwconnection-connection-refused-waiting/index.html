@@ -327,12 +327,17 @@ guidance appears in ~33s   -&gt;   ~7s
 
   <p>
     Observed on an Apple TV 4K running tvOS 27, with a reproduction on the
-    tvOS 27 simulator; the app builds back to tvOS 17. Apple's own DTS
-    engineer has
+    tvOS 27 simulator; the app builds back to tvOS 17.
+  </p>
+
+  <p>
+    Apple's own DTS engineer has
     <a href="https://developer.apple.com/forums/thread/719427">agreed on the
     forums</a> that <code>.waiting</code> is "a poor match" for an error of
     this kind, in a 2022 thread about a different POSIX code, and recommended
-    filing a bug. That thread has no answer in it.
+    filing a bug. The thread is marked answered on the strength of that, and
+    carries no fix: asked about it again since, he reported that the bug is
+    still open.
   </p>
 </article>
 <nav class="post-nav"><a href="/blog/">← All posts</a></nav>
