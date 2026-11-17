@@ -299,6 +299,25 @@ article.post figcaption {
   margin-top: 0.4rem;
 }
 
+/* A post's diagram: inline SVG panels side by side, stacked on a phone. */
+article.post figure.diagram {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+article.post figure.diagram svg {
+  flex: 1 1 260px;
+  min-width: 0;
+  max-width: 100%;
+  height: auto;
+}
+
+article.post figure.diagram figcaption {
+  flex-basis: 100%;
+}
+
 article.post img {
   max-width: 100%;
   height: auto;
