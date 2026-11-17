@@ -340,7 +340,7 @@ article.post img {
   font-size: 0.9rem;
 }
 
-/* ---- ELI5 asides ----
+/* ---- Plain-English asides (class kept as eli5) ----
    Plain <details>/<summary>. No JavaScript: collapsing is the element's own
    behavior, so these work with JS off, are keyboard operable and announced
    correctly by screen readers for free, and degrade to an open block on

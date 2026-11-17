@@ -47,7 +47,7 @@
   </p>
 
   <details class="eli5">
-    <summary>ELI5: what's a CloudKit record zone?</summary>
+    <summary>In plain English: what's a CloudKit record zone?</summary>
     <p>
       CloudKit stores a user's data in databases, and each database is divided
       into zones — think of them as partitions. Every database comes with one
@@ -95,7 +95,7 @@
   </p>
 
   <details class="eli5">
-    <summary>ELI5: what are development and production in CloudKit?</summary>
+    <summary>In plain English: what are development and production in CloudKit?</summary>
     <p>
       Your app's cloud container keeps two separate copies of its structure:
       one that your Xcode builds talk to, and one that the version on the App
@@ -167,7 +167,7 @@ let records = modifications.values.compactMap { try? $0.get().record }
   </p>
 
   <details class="eli5">
-    <summary>ELI5: what are encrypted fields?</summary>
+    <summary>In plain English: what are encrypted fields?</summary>
     <p>
       CloudKit will encrypt chosen fields of a record on the device before
       sending them, using key material from the user's iCloud Keychain, so the
