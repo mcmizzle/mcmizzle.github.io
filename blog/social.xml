@@ -159,7 +159,7 @@ The takeaway I'd keep: when you write a rule from one failing example, you tend 
 Full write-up, with the code and the two traps: https://mcmizzle.com/blog/tvos-scrollview-wont-scroll/]]></content:encoded>
     </item>
     <item>
-      <title><![CDATA[The CloudKit default zone can't list its records, and can't be reset]]></title>
+      <title><![CDATA[The CloudKit default zone can't fetch changes, and can't be reset]]></title>
       <link>https://mcmizzle.com/blog/cloudkit-default-zone-limits/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/cloudkit-default-zone-limits/</guid>
       <pubDate>Tue, 06 Oct 2026 12:00:00 +0000</pubDate>
