@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Core Bluetooth watchdog tore down five healthy links in four minutes — McMizzle</title>
+<meta name="description" content="Five teardowns in four minutes, on a peripheral acknowledging every write. The probe was scheduled off my own writes, so activity suppressed it.">
+<link rel="canonical" href="https://mcmizzle.com/blog/corebluetooth-watchdog-killed-healthy-links/">
+<link rel="alternate" type="application/rss+xml" title="McMizzle Blog" href="https://mcmizzle.com/blog/feed.xml">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fdf6ec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201a13">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://mcmizzle.com/blog/corebluetooth-watchdog-killed-healthy-links/">
+<meta property="og:title" content="My Core Bluetooth watchdog tore down five healthy links in four minutes — McMizzle">
+<meta property="og:description" content="Five teardowns in four minutes, on a peripheral acknowledging every write. The probe was scheduled off my own writes, so activity suppressed it.">
+<meta property="og:image" content="https://mcmizzle.com/assets/og-corebluetooth-watchdog-killed-healthy-links.png">
+<meta property="article:published_time" content="2026-11-17">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
+<main>
+<article class="post">
+  <h1>My Core Bluetooth watchdog tore down five healthy links in four minutes</h1>
+  <p class="post-meta">Kevin McMahon · November 17, 2026</p>
+
+  <p>
+    Five link teardowns in four minutes, and the peripheral was acknowledging
+    every write while it happened. The app would reconnect, work for half a
+    minute, and drop again. Nothing was wrong with the radio, the peripheral,
+    or the thresholds I had picked. The watchdog I wrote to notice a dead link
+    was killing live ones, and it did it faster the busier the app got.
+  </p>
+
+  <p>
+    That last part is the fingerprint. If your Bluetooth LE drops track your
+    own traffic, the rest of this will probably look familiar.
+  </p>
+
+  <h2>Why there was a watchdog at all</h2>
+
+  <p>
+    The app drives a BLE controller for a piece of display hardware. Almost
+    all the traffic goes one way: writes of absolute state, as often as the
+    state changes. The device sends very little back.
+  </p>
+
+  <p>
+    Those writes go out unacknowledged, so they never queue behind a reply.
+    Apple is blunt about what that costs. The documentation for
+    <a href="https://developer.apple.com/documentation/corebluetooth/cbcharacteristicwritetype/withoutresponse"><code>CBCharacteristicWriteType.withoutResponse</code></a>
+    describes it as a write "without any response from the peripheral to
+    indicate whether the write was successful," and adds: "You receive no
+    notification if writing to a characteristic value fails with this write
+    type."
+  </p>
+
+  <p>
+    So my send function cannot fail. Not rarely — there is no failure path in
+    it. A powered-off device and a working one are the same thing from the
+    writing side.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what is a write without a response?</summary>
+    <p>
+      Bluetooth LE lets you send a value to a device two ways. One waits for
+      the device to confirm it arrived. The other fires and forgets, which is
+      faster and keeps a stream of updates flowing, at the price of never
+      learning whether anything was received.
+    </p>
+  </details>
+
+  <p>
+    Core Bluetooth will tell you when a <em>link</em> drops. It cannot tell
+    you about a device that holds the link open and stops doing its job,
+    because from the system's point of view nothing is wrong. If I wanted to
+    know that, I had to ask.
+  </p>
+
+  <h2>The first version watched the wrong layer</h2>
+
+  <p>
+    The device answers each keepalive with a status frame, so an established
+    link produces inbound traffic every four seconds. Silence meant it was
+    gone. Three missed in a row, twelve seconds, tear the link down and
+    rebuild it.
+  </p>
+
+  <p>
+    Then a capture falsified that. The device went mute on its status channel
+    for 54 seconds — no status frames, no command acknowledgements, no answer
+    to a full re-query sweep — while the link stayed up, the ATT layer
+    answered every write, and the hardware visibly obeyed both the command
+    before the silence and the one after it.
+  </p>
+
+  <p>
+    It was executing commands the entire time it was silent. My rule would
+    have torn down a working link after twelve seconds, and would have kept
+    doing it: the same device later went mute for two minutes while the
+    display followed every write.
+  </p>
+
+  <p>
+    Silence does not prove death. That reads as obvious. It is not obvious
+    while you are looking at a device that has stopped talking to you.
+  </p>
+
+  <h2>The signal that did track reality</h2>
+
+  <p>
+    One layer down from the application: the ATT write acknowledgement. Core
+    Bluetooth only reports one for a write you sent asking for it, and through
+    the whole mute those kept coming back on time.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what is ATT?</summary>
+    <p>
+      The low-level protocol underneath everything Core Bluetooth does. Your
+      app asks for a value or sets one, and ATT is the layer that carries the
+      request and the reply. The device's own software has to be running to
+      answer at that level, which is why an answer there means something.
+    </p>
+  </details>
+
+  <p>
+    Worth being precise about one detail, because it is the useful half: an
+    <em>error</em> response counts. This firmware answers every write with an
+    ATT error and acts on the write regardless. For liveness that is fine.
+    The question is not whether the write succeeded, it is whether anything
+    on the other end is still well enough to form a reply and send it.
+  </p>
+
+  <p>
+    That costs exactly one thing, and it is the thing this whole post is
+    about. The delegate callback that reports a write
+    <a href="https://developer.apple.com/documentation/corebluetooth/cbperipheraldelegate/peripheral(_:didwritevaluefor:error:)-4f5ea">only
+    fires for the acknowledged write type</a>, so the keepalive had to go out
+    <code>.withResponse</code> purely to produce something I could time. Only
+    the keepalive. State writes stayed unacknowledged.
+  </p>
+
+  <h2>And then it killed five healthy links</h2>
+
+  <p>
+    Three decisions, each defensible on its own:
+  </p>
+
+  <ul>
+    <li>Liveness is measured on ATT acknowledgements.</li>
+    <li>Only the keepalive is written with a response, so it is the only
+        thing that produces one.</li>
+    <li>The keepalive goes out after four seconds of <em>write</em> idleness.</li>
+  </ul>
+
+  <p>
+    A rehearsal run writing every 1.4 seconds never went four seconds without
+    a write. So the keepalive never went out. So nothing was acknowledged. So
+    there was no evidence of life, and twelve seconds later the watchdog tore
+    down the link it had just blinded itself to.
+  </p>
+
+  <p>
+    The busier the link, the faster it fired. That is why real use and a full
+    day of testing never triggered it — both were quiet enough to let the
+    probe through.
+  </p>
+
+  <p>
+    The thresholds were right the whole time. Four seconds, three missed
+    acknowledgements, twelve to teardown: those numbers never changed and
+    were never the problem. The clock handed to them was wrong. A correct
+    threshold fed the wrong clock is indistinguishable from a broken
+    threshold, and no test of the policy could have caught it, because the
+    mistake was at the call site.
+  </p>
+
+  <h2>A type that cannot be told about a write</h2>
+
+  <p>
+    The fix is one line of intent — schedule the probe from the last probe —
+    and I did not trust myself to keep it. So the thing that owns the clocks
+    has no way to hear about a write:
+  </p>
+
+  <pre><code>struct LinkLiveness {
+    private(set) var lastProbe: Date   // when the probe went out
+    private(set) var lastAck: Date     // ATT answered a write
+    private(set) var lastHeard: Date   // anything arrived at all
+
+    mutating func probed(at t: Date) { lastProbe = t }
+    mutating func acknowledged(at t: Date) { lastAck = t }
+    mutating func heard(at t: Date) { lastHeard = t }
+    // deliberately no wrote(at:)
+
+    func probeIsDue(now: Date) -&gt; Bool {
+        now.timeIntervalSince(lastProbe) &gt;= 4
+    }
+
+    func isStale(now: Date) -&gt; Bool {
+        now.timeIntervalSince(max(lastAck, lastHeard)) &gt;= 12
+    }
+}
+</code></pre>
+
+  <p>
+    Writing more cannot make the link look healthier, because there is no
+    method to call. The field holding the last write time is gone: after the
+    fix it was written and never read, which is how it caused this.
+  </p>
+
+  <details class="eli5">
+    <summary>ELI5: what is a watchdog here?</summary>
+    <p>
+      A timer that assumes something has died if it has not heard from it
+      lately, and resets it. Useful when a connection can fail without
+      announcing it. The hard part is choosing what counts as having heard
+      from it, which is the mistake described above.
+    </p>
+  </details>
+
+  <p>
+    Note <code>isStale</code> takes the more recent of an acknowledgement and
+    any inbound frame. That is safe in a way worth noticing: adding a second
+    source of evidence can only make a watchdog fire <em>less</em> often, so
+    it cannot bring back the failure the acknowledgement rule was written to
+    avoid. Silence still tears nothing down. "Nothing has confirmed what the
+    display is showing" became a separate question, surfaced to the operator
+    and acted on by nobody.
+  </p>
+
+  <h2>What I'd tell you to check first</h2>
+
+  <p>
+    If your drops correlate with your own traffic, suspect your probe before
+    the radio. Then check what the probe measures and what schedules it,
+    separately — mine measured the right thing on the wrong clock, and those
+    two faults look identical from outside.
+  </p>
+
+  <p>
+    Treat the two directions differently. Traffic proves life. Silence proves
+    nothing, and a device can be mute for minutes while doing exactly what
+    you asked.
+  </p>
+
+  <p>
+    Then ask whether you need the watchdog at all. Walking out of range, Core
+    Bluetooth got there first: <code>The connection has timed out
+    unexpectedly</code>, about two seconds after the last acknowledgement,
+    against my twelve. For the common case the system beats anything you
+    write.
+  </p>
+
+  <p>
+    What is left is a device that keeps the link open and stops working, which
+    Core Bluetooth cannot see by definition — and which, on the evidence of
+    that 54-second mute, an acknowledgement-based watchdog may not catch
+    either, since the device went on acknowledging throughout.
+  </p>
+
+  <p>
+    So I kept mine and put a counter on it. Still zero after a season and it
+    gets deleted with evidence. Ever non-zero and the question is settled the
+    other way. That is a cheaper way to hold the argument than the two rounds
+    I already spent having it.
+  </p>
+</article>
+<nav class="post-nav"><a href="/blog/">← All posts</a></nav>
+</main>
+<footer>
+  <nav class="footer-links">
+    <a href="/about/">About</a> &middot;
+    <a href="/blog/">Blog</a> &middot;
+    <a href="/printing/">3D printing</a> &middot;
+    <a href="/support/">Support</a> &middot;
+    <a href="/privacy/">Privacy</a> &middot;
+    <a href="/blog/feed.xml">RSS</a> &middot;
+    <a href="https://www.linkedin.com/in/mcmizzle">LinkedIn</a>
+  </nav>
+  <p class="footer-legal">&copy; 2026 Kevin McMahon (McMizzle)</p>
+</footer>
+</body>
+</html>

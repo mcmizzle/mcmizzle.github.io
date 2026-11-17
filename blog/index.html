@@ -36,6 +36,16 @@
   <!-- POST LIST: newest first. Add each new post as the first <li>. -->
   <ul class="post-list">
     <li>
+      <p class="post-meta">November 17, 2026</p>
+      <span class="post-title"><a href="/blog/corebluetooth-watchdog-killed-healthy-links/">My Core Bluetooth watchdog tore down five healthy links in four minutes</a></span>
+      <p class="post-summary">
+        Every teardown landed on a peripheral that was acknowledging every
+        write, and they came faster the busier the app got. The liveness probe
+        was scheduled off my own writes, so a busy link suppressed the only
+        evidence of life the watchdog had.
+      </p>
+    </li>
+    <li>
       <p class="post-meta">November 14, 2026</p>
       <span class="post-title"><a href="/blog/core-bluetooth-relaunch-pending-connect/">Core Bluetooth stopped relaunching my app, because for five seconds nothing was pending</a></span>
       <p class="post-summary">

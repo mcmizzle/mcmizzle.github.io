@@ -10,6 +10,13 @@
     <!-- ITEMS: newest first. Add each new post as the first <item>.
          pubDate must be RFC-822, e.g. Fri, 07 Aug 2026 12:00:00 +0000 -->
     <item>
+      <title>My Core Bluetooth watchdog tore down five healthy links in four minutes</title>
+      <link>https://mcmizzle.com/blog/corebluetooth-watchdog-killed-healthy-links/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/corebluetooth-watchdog-killed-healthy-links/</guid>
+      <pubDate>Tue, 17 Nov 2026 12:00:00 +0000</pubDate>
+      <description>Every teardown landed on a peripheral that was acknowledging every write, and they came faster the busier the app got. The liveness probe was scheduled off my own writes, so a busy link suppressed the only evidence of life the watchdog had.</description>
+    </item>
+    <item>
       <title>Core Bluetooth stopped relaunching my app, because for five seconds nothing was pending</title>
       <link>https://mcmizzle.com/blog/core-bluetooth-relaunch-pending-connect/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/core-bluetooth-relaunch-pending-connect/</guid>

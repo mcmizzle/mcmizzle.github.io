@@ -7,6 +7,38 @@
     <language>en-us</language>
     <atom:link href="https://mcmizzle.com/blog/social.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title><![CDATA[My Core Bluetooth watchdog tore down five healthy links in four minutes]]></title>
+      <link>https://mcmizzle.com/blog/corebluetooth-watchdog-killed-healthy-links/</link>
+      <guid isPermaLink="true">https://mcmizzle.com/blog/corebluetooth-watchdog-killed-healthy-links/</guid>
+      <pubDate>Tue, 17 Nov 2026 12:00:00 +0000</pubDate>
+      <description><![CDATA[A Bluetooth connection in one of my projects kept dropping. The device on the other end was fine. It was answering every message I sent it, right up to the moment the connection was torn down.
+
+I had written the thing that was tearing it down.
+
+The problem it exists to solve is real. The messages the app sends are the fire-and-forget kind: faster, and you never learn whether they arrived. So a device that has quietly died looks exactly like one that is working. If you want to know the difference you have to ask on purpose, with one message that demands a reply, and start worrying when the replies stop.
+
+Mine asked on purpose, but only after four seconds of sending nothing else. When the app was busy it was never quiet for four seconds, so it never asked, so no replies came back, so it decided the device was dead and hung up. The harder it worked, the faster it did this. Which is also why it never happened while I was testing.
+
+Every threshold I had chosen was correct. The mistake was which clock I measured from, and a unit test could not see it, because the test checks the thresholds and the mistake was where they get used.
+
+Two things I would take elsewhere. A health check has to run on its own schedule, never off the activity it is supposed to be watching. And the two directions are not symmetric: traffic proves something is alive, silence proves nothing at all.
+
+Full write-up, with the Core Bluetooth specifics and what the system already does for you: https://mcmizzle.com/blog/corebluetooth-watchdog-killed-healthy-links/]]></description>
+      <content:encoded><![CDATA[A Bluetooth connection in one of my projects kept dropping. The device on the other end was fine. It was answering every message I sent it, right up to the moment the connection was torn down.
+
+I had written the thing that was tearing it down.
+
+The problem it exists to solve is real. The messages the app sends are the fire-and-forget kind: faster, and you never learn whether they arrived. So a device that has quietly died looks exactly like one that is working. If you want to know the difference you have to ask on purpose, with one message that demands a reply, and start worrying when the replies stop.
+
+Mine asked on purpose, but only after four seconds of sending nothing else. When the app was busy it was never quiet for four seconds, so it never asked, so no replies came back, so it decided the device was dead and hung up. The harder it worked, the faster it did this. Which is also why it never happened while I was testing.
+
+Every threshold I had chosen was correct. The mistake was which clock I measured from, and a unit test could not see it, because the test checks the thresholds and the mistake was where they get used.
+
+Two things I would take elsewhere. A health check has to run on its own schedule, never off the activity it is supposed to be watching. And the two directions are not symmetric: traffic proves something is alive, silence proves nothing at all.
+
+Full write-up, with the Core Bluetooth specifics and what the system already does for you: https://mcmizzle.com/blog/corebluetooth-watchdog-killed-healthy-links/]]></content:encoded>
+    </item>
+    <item>
       <title><![CDATA[Core Bluetooth stopped relaunching my app, because for five seconds nothing was pending]]></title>
       <link>https://mcmizzle.com/blog/core-bluetooth-relaunch-pending-connect/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/core-bluetooth-relaunch-pending-connect/</guid>
