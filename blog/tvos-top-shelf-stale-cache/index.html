@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Your tvOS Top Shelf tile is cached, and reinstalling won't clear it — McMizzle</title>
+<title>Your tvOS Top Shelf tile is cached: reinstall first, reboot if that fails — McMizzle</title>
 <meta name="description" content="The Top Shelf drew a placeholder after the code was correct: the system caches the rendered tile and dedupes on content. On tvOS 27 a reinstall clears it.">
 <link rel="canonical" href="https://mcmizzle.com/blog/tvos-top-shelf-stale-cache/">
 <link rel="alternate" type="application/rss+xml" title="McMizzle Blog" href="https://mcmizzle.com/blog/feed.xml">
@@ -14,7 +14,7 @@
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#201a13">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://mcmizzle.com/blog/tvos-top-shelf-stale-cache/">
-<meta property="og:title" content="Your tvOS Top Shelf tile is cached, and reinstalling won't clear it — McMizzle">
+<meta property="og:title" content="Your tvOS Top Shelf tile is cached: reinstall first, reboot if that fails — McMizzle">
 <meta property="og:description" content="The Top Shelf drew a placeholder after the code was correct: the system caches the rendered tile and dedupes on content. On tvOS 27 a reinstall clears it.">
 <meta property="og:image" content="https://mcmizzle.com/assets/og-tvos-top-shelf-stale-cache.png">
 <meta property="article:published_time" content="2026-08-03">
@@ -25,7 +25,7 @@
 <header class="site-header"><a class="home-link" href="/">McMizzle</a></header>
 <main>
 <article class="post">
-  <h1>Your tvOS Top Shelf tile is cached, and reinstalling won't clear it</h1>
+  <h1>Your tvOS Top Shelf tile is cached: reinstall first, reboot if that fails</h1>
   <p class="post-meta">Kevin McMahon · August 3, 2026</p>
 
   <p>
@@ -56,8 +56,8 @@
   <p>
     That is an unsatisfying ending, so let me give you the useful version up
     front: <strong>the system caches the rendered Top Shelf tile, dedupes
-    incoming content against that cache, and the cache survives uninstalling
-    and reinstalling your app.</strong> If you have shipped even one build that
+    incoming content against that cache, and on the build I found this on, the
+    cache survived uninstalling and reinstalling your app.</strong> If you have shipped even one build that
     handed the Top Shelf a bad item, you can spend hours looking at correct code
     that produces a wrong screen. Nothing about the symptom suggests a cache,
     which is exactly why it costs so much time.

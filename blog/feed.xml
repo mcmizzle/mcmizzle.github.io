@@ -94,7 +94,7 @@
       <description>One segment a minute came out at double length on a real camera, and never once on synthetic test video. The max keyframe interval is a ceiling, not a schedule — encoders spend keyframes early on scene changes — and it counts the timestamps you supply rather than wall clock. Half of that is documented, on a page about a different property.</description>
     </item>
     <item>
-      <title>Your tvOS Top Shelf tile is cached, and reinstalling won't clear it</title>
+      <title>Your tvOS Top Shelf tile is cached: reinstall first, reboot if that fails</title>
       <link>https://mcmizzle.com/blog/tvos-top-shelf-stale-cache/</link>
       <guid isPermaLink="true">https://mcmizzle.com/blog/tvos-top-shelf-stale-cache/</guid>
       <pubDate>Mon, 03 Aug 2026 12:00:00 +0000</pubDate>
