@@ -42,8 +42,8 @@
   <p>
     Fixing that produced a second error that looked unrelated, and by the time
     I had finished with that one I had found a third problem I was not looking
-    for and could not have been told about. All three had the same cause: every
-    record was sitting in the private database's default zone.
+    for and could not have been told about. All three led back to the same
+    choice: every record was sitting in the private database's default zone.
   </p>
 
   <details class="eli5">
@@ -207,9 +207,7 @@ let records = modifications.values.compactMap { try? $0.get().record }
     is already unrecoverable — and no test reaches it either. On my Mac,
     constructing a <code>CKContainer</code> for an identifier the host has no
     matching entitlement for traps rather than throwing, so the test process
-    dies on the spot instead of one case failing. The recovery path was
-    unexercised, unexercisable and wrong, and the first signal would have been
-    somebody's lost data staying lost.
+    dies on the spot instead of one case failing.
   </p>
 
   <h2>One custom zone, created before every write</h2>

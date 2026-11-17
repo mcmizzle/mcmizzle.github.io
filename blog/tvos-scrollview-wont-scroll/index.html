@@ -168,8 +168,8 @@ ScrollView {
   <p>
     That is the question worth asking, and it is not "is this focusable." It is
     <strong>how many focus targets does this scroll view have in its emptiest
-    state</strong> — with no products, no history, no content loaded. Zero and
-    one both mean stuck. The count is greppable; the behavior is not.
+    state</strong> — with no products, no history, no content loaded. The count
+    is greppable; the behavior is not.
   </p>
 
   <h2>Scrolling back up needs a target above</h2>
@@ -236,9 +236,7 @@ ScrollView {
   </p>
 
   <p>
-    What works instead is counting. Walk each scroll view, count the descendants
-    that can take focus, and ask what the count is with every optional piece of
-    content missing. Two of mine came out at one and zero.
+    What works instead is counting. Two of mine came out at one and zero.
   </p>
 
   <h2>What I'd tell you to check first</h2>

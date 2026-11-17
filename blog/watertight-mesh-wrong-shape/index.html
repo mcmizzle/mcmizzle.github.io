@@ -139,8 +139,7 @@ out.append((p[0] + bx * d / cosh, p[1] + by * d / cosh))
     There is a second failure, and no miter limit reaches it. Where the outline
     curves more tightly than the offset distance, the inset <em>inverts</em>. An
     arc of radius 0.39 mm, inset by 1.40 mm, turns inside out: the new points
-    cross over each other and the ring folds back through itself. That is not a
-    corner-join problem, so capping the join does nothing for it.
+    cross over each other and the ring folds back through itself.
   </p>
 
   <p>
@@ -279,8 +278,7 @@ out.append((p[0] + bx * d / cosh, p[1] + by * d / cosh))
     I verified it the way I now verify any check: put the defect back. Build the
     part with the old vertex-bisector inset and 44 of the 69 rings it checks go
     red — several per opening, since each one contributes the outline as drawn
-    plus every ring derived from it. A check that has only ever been seen green
-    is not evidence that it works.
+    plus every ring derived from it.
   </p>
 
   <h2>The check I nearly shipped instead</h2>

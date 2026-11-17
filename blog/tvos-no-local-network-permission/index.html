@@ -106,7 +106,6 @@ watchOS     no          -
     says tvOS 14.0+ too. So two plist keys advertise themselves as available on
     a platform that the technote governing them says has nothing to configure.
     The key reference is the page you land on from a search for the key name.
-    The technote is the page that is right.
   </p>
 
   <p>
@@ -146,8 +145,8 @@ watchOS     no          -
 
   <p>
     The direction that makes it dangerous is the correction, not the error.
-    <code>.waiting</code> at tvOS launch is real — it is Wi-Fi associating or
-    DNS settling after the device wakes, and the connection does reach
+    <code>.waiting</code> at tvOS launch is real — most likely Wi-Fi
+    associating or DNS settling after the device wakes, and the connection does reach
     <code>.ready</code> on its own. Learning that tvOS has no prompt reads as
     an argument for deleting the timeout that bounds the wait. That timeout is
     the thing standing between an unreachable host and a connect call that

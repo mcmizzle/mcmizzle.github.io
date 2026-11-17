@@ -116,9 +116,7 @@ if isKeyframe &amp;&amp; elapsed &gt;= targetDuration - keyframeArrivalTolerance
     bug. <em>Tolerance</em> and <em>arrival</em> describe absorbing jitter — a
     keyframe turning up slightly late. I had reasoned that the encoder property
     is an upper bound, so keyframes arrive at one second or a hair under, and a
-    hair under is exactly what the tolerance absorbed. Having named the
-    constant after one side of the distribution, I stopped thinking about the
-    other one.
+    hair under is exactly what the tolerance absorbed.
   </p>
 
   <p>
@@ -194,8 +192,8 @@ if isKeyframe &amp;&amp; elapsed &gt;= targetDuration - keyframeArrivalTolerance
 
   <p>
     Efficient compression is exactly what a camera pointed at a moving toolhead
-    under changing light provokes. Scene changes are constant, and the encoder
-    obligingly spends a keyframe on each one. It is a ceiling, not a schedule.
+    under changing light provokes. Scene changes are constant, and that is
+    where I take the early keyframes to come from.
   </p>
 
   <h2>Which clock? That part really isn't documented</h2>
@@ -342,7 +340,7 @@ if isKeyframe &amp;&amp; elapsed &gt;= minimumSegmentDuration {
     </li>
     <li>
       <strong>Read the neighboring documentation page.</strong> Half of this
-      was published the whole time, one cross-reference away from the page I
+      was published the whole time, one See Also entry away from the page I
       was on.
     </li>
   </ul>

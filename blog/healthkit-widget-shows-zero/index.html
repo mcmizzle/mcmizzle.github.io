@@ -87,7 +87,8 @@
     wake, or a background app refresh, fires while the phone sits on a
     nightstand — locked. So the reads <em>most</em> likely to fail are the ones
     running unattended, and the ones that succeed are the ones you're standing
-    there watching. That is why it never reproduced while I was looking at it.
+    there watching. That would explain why it never reproduced while I was
+    looking at it.
   </p>
 
   <details class="eli5">
@@ -134,7 +135,7 @@ let query = HKStatisticsQuery(
     nil, so <code>sumQuantity()</code> is never reached, so the
     <code>?? 0</code> fires and the function returns <strong>0</strong> — an
     ordinary <code>Int</code>, indistinguishable from a genuine day with no
-    samples in it. Every caller downstream got a number that looked like data.
+    samples in it.
   </p>
 
   <details class="eli5">
@@ -155,13 +156,14 @@ let query = HKStatisticsQuery(
   </details>
 
   <p>
-    So the overnight sequence was: wake while locked, fail every read, coerce all
-    three energy values to zero, compute a day in which nothing had been eaten or
-    burned, publish it with a current timestamp, and go back to sleep. Every
-    subsequent locked wake did it again. Nothing corrected it until a foreground
-    launch — which happens with the phone unlocked — finally read something real.
-    That includes the "fixes itself the moment I open the app" part that had me
-    chasing widget refresh to begin with.
+    So the overnight sequence, as best I can reconstruct it, was: wake while
+    locked, fail every read, coerce all three energy values to zero, compute a
+    day in which nothing had been eaten or burned, publish it with a current
+    timestamp, and go back to sleep. Every subsequent locked wake did it again.
+    Nothing corrected it until a foreground launch — which happens with the
+    phone unlocked — finally read something real. That includes the "fixes
+    itself the moment I open the app" part that had me chasing widget refresh
+    to begin with.
   </p>
 
   <p>

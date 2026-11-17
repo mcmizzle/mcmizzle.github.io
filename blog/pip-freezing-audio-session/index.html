@@ -72,10 +72,7 @@
   </ul>
 
   <p>
-    Thirteen things. Every one of them on the video side. That is not an
-    accident of what I happened to try — the symptom was a frozen video window,
-    so every hypothesis I formed was about video, and I went on forming them
-    for weeks.
+    Thirteen things. Every one of them on the video side.
   </p>
 
   <h2>The trigger was a transition, not a state</h2>
@@ -169,8 +166,9 @@ after a source switch    froze at 43s
   <p>
     Put together: as far as the rest of the system was concerned, my app was an
     app playing audio, through a session that interrupts everyone else's. And a
-    source switch tears that whole stack down and builds a new one, which
-    re-claims the session in the middle of whatever else is playing.
+    source switch tears that whole stack down and builds a new one, which as
+    far as I can tell re-claims the session in the middle of whatever else is
+    playing.
   </p>
 
   <h2>The one-line change I had spent weeks not making</h2>

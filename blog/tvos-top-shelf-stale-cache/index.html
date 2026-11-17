@@ -57,9 +57,8 @@
     That is an unsatisfying ending, so let me give you the useful version up
     front: <strong>the system caches the rendered Top Shelf tile, dedupes
     incoming content against that cache, and on the build I found this on, the
-    cache survived uninstalling and reinstalling your app.</strong> If you have shipped even one build that
-    handed the Top Shelf a bad item, you can spend hours looking at correct code
-    that produces a wrong screen. Nothing about the symptom suggests a cache,
+    cache survived uninstalling and reinstalling your app.</strong> Nothing
+    about the symptom suggests a cache,
     which is exactly why it costs so much time.
   </p>
 
@@ -242,7 +241,7 @@ log.notice("""
     Worse, my failed copy didn't fall back. It returned nil for both image URLs
     when the copy failed, so several builds went to the device handing the system
     <code>image1x=nil image2x=nil</code> — guaranteeing the blank tile the change
-    was supposed to fix. Remember that; it's the whole ending.
+    was supposed to fix.
   </p>
 
   <h2>The log line that explains the rest</h2>
@@ -308,8 +307,8 @@ let item = TVTopShelfSectionedItem(identifier: "current-item-\(identity)")
   </p>
 
   <p>
-    The cached rendering was one built while my own commits were returning nil
-    image URLs. Once the Home screen had cached a model with no images, nothing
+    As best I can tell, the cached rendering was one built while my own commits
+    were returning nil image URLs. Once the Home screen had cached a model with no images, nothing
     displaced it: not a corrected build, not a changed item identifier, not
     uninstalling and reinstalling the app. It kept faithfully drawing a tile from
     builds ago for hours, while every diagnostic I could run said the current
@@ -328,8 +327,8 @@ let item = TVTopShelfSectionedItem(identifier: "current-item-\(identity)")
   <h2>What I'd tell you to check first</h2>
 
   <p>
-    If a Top Shelf change doesn't seem to take effect, <strong>reboot the device
-    before you doubt the code.</strong> It costs a minute. Doubting the code cost
+    If a Top Shelf change doesn't seem to take effect, <strong>reinstall, then
+    reboot the device, before you doubt the code.</strong> It costs a minute. Doubting the code cost
     me an evening and produced two commits that made things worse.
   </p>
 
