@@ -49,7 +49,7 @@ That isn't a coincidence, it's the bug. Opening the app was what put it back on 
 
 iOS will restart a terminated app for a Bluetooth event, but only if it was waiting on something specific when it died. Mine waits on one thing: a connection request it never cancels. I'd added a feature that hung up for five seconds so the scale's radio could sleep instead of draining its batteries — and I timed those five seconds myself. In that window the app was waiting on nothing. Terminated there, it had nothing to be woken for, and nothing would wake it again until a person opened it.
 
-I'd spotted that risk and covered it: ask iOS for extra runtime so the process survives the window. That made it worse. When the borrowed time runs out you get one callback, and that callback is itself what holds the system off — it stops the moment it returns. My cleanup ran asynchronously from inside it, so it queued behind its own return and never ran. An assertion I added to make termination less likely was causing it.
+I'd spotted that risk and covered it: ask iOS for extra runtime so the process survives the window. That made it worse. When the borrowed time runs out you get one callback, and that callback is itself what holds the system off — it stops the moment it returns. My cleanup ran asynchronously from inside it, so it queued behind its own return and never ran. An assertion I added to make termination less likely was the likeliest cause of it.
 
 The transferable part: if you need a delay in the background, make the operating system hold it. A timer of your own only runs while your process does, and the background is exactly where that assumption fails.
 
@@ -60,7 +60,7 @@ That isn't a coincidence, it's the bug. Opening the app was what put it back on 
 
 iOS will restart a terminated app for a Bluetooth event, but only if it was waiting on something specific when it died. Mine waits on one thing: a connection request it never cancels. I'd added a feature that hung up for five seconds so the scale's radio could sleep instead of draining its batteries — and I timed those five seconds myself. In that window the app was waiting on nothing. Terminated there, it had nothing to be woken for, and nothing would wake it again until a person opened it.
 
-I'd spotted that risk and covered it: ask iOS for extra runtime so the process survives the window. That made it worse. When the borrowed time runs out you get one callback, and that callback is itself what holds the system off — it stops the moment it returns. My cleanup ran asynchronously from inside it, so it queued behind its own return and never ran. An assertion I added to make termination less likely was causing it.
+I'd spotted that risk and covered it: ask iOS for extra runtime so the process survives the window. That made it worse. When the borrowed time runs out you get one callback, and that callback is itself what holds the system off — it stops the moment it returns. My cleanup ran asynchronously from inside it, so it queued behind its own return and never ran. An assertion I added to make termination less likely was the likeliest cause of it.
 
 The transferable part: if you need a delay in the background, make the operating system hold it. A timer of your own only runs while your process does, and the background is exactly where that assumption fails.
 
